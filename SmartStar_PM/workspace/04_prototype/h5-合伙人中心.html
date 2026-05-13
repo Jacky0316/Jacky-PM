@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>供应链管理</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #323233; background: #f7f8fa; max-width: 430px; margin: 0 auto; position: relative; }
+
+    .page { min-height: 100%; background: #f7f8fa; padding-bottom: 70px; }
+    .page-header { background: #fff; padding: 12px 16px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+    .page-title { font-size: 16px; font-weight: bold; text-align: center; flex: 1; }
+    .back-btn { font-size: 20px; cursor: pointer; color: #323233; }
+
+    .card { background: #fff; border-radius: 8px; padding: 16px; margin: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #323233; }
+
+    .identity-card { cursor: pointer; transition: transform 0.2s; }
+    .identity-card:active { transform: scale(0.98); }
+    .identity-header { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #f5f5f5; }
+    .identity-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; }
+    .identity-icon.platform { background: #FF6B00; }
+    .identity-icon.supplier { background: #1989fa; }
+    .identity-icon.store { background: #07c160; }
+    .identity-info { flex: 1; }
+    .identity-name { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+    .identity-owner { font-size: 12px; color: #969799; }
+    .identity-status { padding: 4px 10px; border-radius: 12px; font-size: 12px; background: #e6f7ed; color: #07c160; }
+    .identity-status.disabled { background: #f5f5f5; color: #969799; }
+    .identity-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+    .stat-item { }
+    .stat-label { font-size: 12px; color: #969799; margin-bottom: 2px; }
+    .stat-value { font-size: 14px; font-weight: 500; }
+    .stat-value.orange { color: #FF6B00; }
+    .stat-value.green { color: #07c160; }
+    .identity-time { font-size: 12px; color: #969799; margin-bottom: 8px; }
+    .identity-link { text-align: center; font-size: 14px; }
+    .identity-link.orange { color: #FF6B00; }
+    .identity-link.green { color: #07c160; }
+    .identity-link.blue { color: #1989fa; }
+
+    .apply-card { border: 1px dashed #dcdee0; background: #fff; border-radius: 8px; padding: 24px; text-align: center; }
+    .apply-card-title { color: #969799; margin-bottom: 12px; }
+    .apply-card-btns { display: flex; gap: 12px; }
+    .apply-btn { flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; color: #fff; }
+    .apply-btn.supplier { background: #FF6B00; }
+    .apply-btn.store { background: #07c160; }
+
+    .empty-state { background: #fff; border-radius: 8px; padding: 48px 24px; text-align: center; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-text { color: #969799; margin-bottom: 16px; }
+    .empty-btn { padding: 10px 24px; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; color: #fff; }
+    .empty-btn.supplier { background: #FF6B00; }
+    .empty-btn.store { background: #07c160; }
+
+    .search-bar { background: #fff; padding: 12px; border-bottom: 1px solid #eee; display: flex; gap: 12px; align-items: center; }
+    .search-input { flex: 1; padding: 8px 12px; border: 1px solid #eee; border-radius: 16px; font-size: 14px; background: #f7f8fa; }
+    .search-input:focus { outline: none; }
+    .filter-select { padding: 8px; border: 1px solid #eee; border-radius: 4px; font-size: 14px; background: #fff; }
+
+    .partner-item { background: #fff; border-radius: 8px; padding: 16px; margin: 0 12px 12px; }
+    .partner-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .partner-user { display: flex; align-items: center; gap: 12px; }
+    .partner-avatar { width: 40px; height: 40px; border-radius: 50%; background: #FF6B00; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; }
+    .partner-name { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+    .partner-phone { font-size: 12px; color: #969799; }
+    .partner-status { padding: 2px 8px; border-radius: 4px; font-size: 12px; background: #e6f7ed; color: #07c160; }
+    .partner-status.disabled { background: #f5f5f5; color: #969799; }
+    .partner-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .partner-stat { }
+    .partner-stat-label { font-size: 12px; color: #969799; margin-bottom: 2px; }
+    .partner-stat-value { font-size: 14px; font-weight: 500; }
+    .partner-time { font-size: 12px; color: #969799; margin-bottom: 12px; }
+    .partner-actions { display: flex; gap: 8px; border-top: 1px solid #f5f5f5; padding-top: 12px; }
+    .partner-action { flex: 1; padding: 8px; background: #fff; border: 1px solid #eee; border-radius: 4px; cursor: pointer; font-size: 14px; text-align: center; }
+    .partner-action:active { background: #f5f5f5; }
+    .partner-action.orange { color: #FF6B00; }
+    .partner-action.green { color: #07c160; }
+    .partner-action.danger { color: #ff976a; }
+
+    .tabbar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; display: flex; background: #fff; border-top: 1px solid #eee; z-index: 100; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 0; cursor: pointer; color: #969799; font-size: 10px; }
+    .tab-item.active { color: #FF6B00; }
+    .tab-icon { font-size: 20px; margin-bottom: 2px; }
+
+    .steps { background: #fff; padding: 16px 12px; display: flex; justify-content: space-between; }
+    .step { flex: 1; text-align: center; position: relative; }
+    .step-num { width: 24px; height: 24px; border-radius: 50%; background: #eee; color: #999; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 12px; }
+    .step-num.active { background: #07c160; color: #fff; }
+    .step-num.supplier { background: #FF6B00; }
+    .step-label { font-size: 10px; color: #999; }
+    .step-label.active { color: #07c160; }
+    .step-label.supplier { color: #FF6B00; }
+    .step-line { position: absolute; top: 12px; left: 50%; width: 100%; height: 2px; background: #eee; z-index: -1; }
+    .step-line.active { background: #07c160; }
+    .step-line.supplier { background: #FF6B00; }
+
+    .option-list { padding: 0 12px; }
+    .option-item { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 12px; border: 1px solid #eee; cursor: pointer; transition: all 0.2s; }
+    .option-item:active { transform: scale(0.98); }
+    .option-item.selected { border: 2px solid #07c160; }
+    .option-item.supplier.selected { border: 2px solid #FF6B00; }
+    .option-item-header { display: flex; align-items: center; }
+    .option-radio { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #999; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
+    .option-item.selected .option-radio { border: 2px solid #07c160; background: #07c160; }
+    .option-item.supplier.selected .option-radio { border: 2px solid #FF6B00; background: #FF6B00; }
+    .option-radio-inner { width: 10px; height: 10px; border-radius: 50%; background: #fff; display: none; }
+    .option-item.selected .option-radio-inner { display: block; }
+    .option-name { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
+    .option-desc { font-size: 12px; color: #969799; }
+    .option-price { font-size: 14px; font-weight: bold; color: #07c160; }
+    .option-price.supplier { color: #FF6B00; }
+
+    .level-item { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 12px; border: 1px solid #eee; cursor: pointer; transition: all 0.2s; }
+    .level-item:active { transform: scale(0.98); }
+    .level-item.selected { border: 2px solid #07c160; }
+    .level-item.supplier.selected { border: 2px solid #FF6B00; }
+    .level-header { display: flex; align-items: center; margin-bottom: 8px; }
+    .level-name { font-size: 16px; font-weight: bold; margin-right: 12px; }
+    .level-detail { padding-left: 32px; font-size: 13px; color: #646566; }
+    .level-detail-row { margin-bottom: 6px; }
+    .level-detail-label { color: #969799; }
+    .level-detail-value { color: #07c160; font-weight: bold; }
+    .level-detail-value.orange { color: #FF6B00; }
+
+    .confirm-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+    .confirm-label { color: #969799; }
+    .confirm-value { }
+    .notice { font-size: 12px; color: #969799; padding: 12px; line-height: 1.6; }
+    .notice p { margin-bottom: 4px; }
+
+    .bottom-btns { position: fixed; bottom: 60px; left: 0; right: 0; padding: 12px; background: #fff; border-top: 1px solid #eee; display: flex; gap: 12px; z-index: 101; }
+    .bottom-btn { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 4px; cursor: pointer; font-size: 14px; background: #fff; }
+    .bottom-btn:active { background: #f5f5f5; }
+    .bottom-btn.primary { background: #07c160; color: #fff; border: none; }
+    .bottom-btn.supplier { background: #FF6B00; color: #fff; border: none; }
+    .bottom-btn:disabled { background: #ccc; color: #fff; border: none; cursor: not-allowed; }
+
+    .detail-section { background: #fff; border-radius: 8px; padding: 16px; margin: 12px; }
+    .detail-section-title { font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #323233; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .detail-item { }
+    .detail-label { font-size: 12px; color: #969799; margin-bottom: 2px; }
+    .detail-value { font-size: 14px; }
+    .detail-value.orange { color: #FF6B00; }
+    .detail-value.green { color: #07c160; }
+    .detail-value.blue { color: #1989fa; }
+
+    .stats-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .stats-card { flex: 1; text-align: center; padding: 12px 8px; background: #f7f8fa; border-radius: 8px; }
+    .stats-label { font-size: 12px; color: #969799; margin-bottom: 4px; }
+    .stats-value { font-size: 16px; font-weight: bold; }
+    .stats-value.orange { color: #FF6B00; }
+    .stats-value.green { color: #07c160; }
+    .stats-value.blue { color: #1989fa; }
+
+    .time-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .time-tab { flex: 1; text-align: center; padding: 8px 0; background: #f7f8fa; border-radius: 4px; font-size: 12px; cursor: pointer; color: #666; }
+    .time-tab.active { background: #FF6B00; color: #fff; }
+
+    .dividend-summary { text-align: center; padding: 12px; margin-top: 12px; background: #fff7f0; border-radius: 8px; border: 1px solid #FF6B0020; }
+    .dividend-summary-label { font-size: 12px; color: #969799; margin-bottom: 4px; }
+    .dividend-summary-value { font-size: 24px; font-weight: bold; color: #FF6B00; }
+
+    .record-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .record-date { font-size: 14px; margin-bottom: 4px; }
+    .record-source { font-size: 12px; color: #969799; }
+    .record-amount { font-size: 16px; font-weight: bold; color: #07c160; }
+
+    .popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; align-items: flex-end; }
+    .popup-overlay.show { display: block; }
+    .popup-content { background: #fff; width: 100%; max-height: 70vh; border-radius: 16px 16px 0 0; overflow: auto; }
+    .popup-header { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .popup-title { font-size: 16px; font-weight: bold; }
+    .popup-close { font-size: 20px; cursor: pointer; color: #969799; }
+    .popup-body { padding: 12px; }
+
+    .slider-container { background: #fff; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    .slider-title { font-size: 14px; font-weight: bold; margin-bottom: 12px; }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-input { flex: 1; -webkit-appearance: none; height: 4px; background: #eee; border-radius: 2px; }
+    .slider-input::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #07c160; border-radius: 50%; cursor: pointer; }
+    .slider-value { min-width: 60px; text-align: right; font-weight: bold; color: #07c160; }
+
+    .success-page { min-height: 100vh; background: #f7f8fa; text-align: center; padding-top: 100px; }
+    .success-icon { width: 80px; height: 80px; border-radius: 50%; background: #07c160; color: #fff; font-size: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .success-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; }
+    .success-text { font-size: 14px; color: #969799; margin-bottom: 32px; }
+    .success-btn { padding: 12px 32px; background: #07c160; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .success-btn.supplier { background: #FF6B00; }
+
+    .text-center { text-align: center; }
+    .mt-12 { margin-top: 12px; }
+    .mb-12 { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div class="tabbar" id="tabbar">
+    <div class="tab-item active" data-page="home" onclick="switchTab('home')">
+      <span class="tab-icon">🏠</span>
+      <span>首页</span>
+    </div>
+    <div class="tab-item" data-page="user/partner" onclick="switchTab('user/partner')">
+      <span class="tab-icon">👥</span>
+      <span>合伙人</span>
+    </div>
+  </div>
+
+  <div class="popup-overlay" id="popup-dividend">
+    <div class="popup-content">
+      <div class="popup-header">
+        <div class="popup-title" id="dividend-title">张三 - 收益明细</div>
+        <span class="popup-close" onclick="closePopup('popup-dividend')">×</span>
+      </div>
+      <div class="popup-body" id="dividend-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const storePartnerList = [
+      { id: 'P001', nickname: '张三', phone: '13812345678', level: '2GP', region: '广东省广州市天河区', totalPerformance: 128500.00, totalDividend: 3855.00, subscribeTime: '2026-01-15 10:30:00', status: 'active' },
+      { id: 'P002', nickname: '李四', phone: '13923456789', level: '1GP', region: '广东省深圳市南山区', totalPerformance: 85600.00, totalDividend: 2568.00, subscribeTime: '2026-02-20 14:20:00', status: 'active' },
+      { id: 'P003', nickname: '王五', phone: '13734567890', level: 'LP', region: '浙江省杭州市西湖区', totalPerformance: 45200.00, totalDividend: 1356.00, subscribeTime: '2026-03-05 09:15:00', status: 'active' },
+      { id: 'P004', nickname: '赵六', phone: '13645678901', level: '2GP', region: '北京市朝阳区', totalPerformance: 210000.00, totalDividend: 6300.00, subscribeTime: '2026-01-08 16:45:00', status: 'active' },
+      { id: 'P005', nickname: '钱七', phone: '13556789012', level: '1GP', region: '上海市浦东新区', totalPerformance: 67500.00, totalDividend: 2025.00, subscribeTime: '2026-03-18 11:00:00', status: 'disabled' },
+    ];
+
+    const userPartnerIdentities = [
+      { id: 'UPI001', type: 'platform', typeName: '平台合伙人', owner: '星马特平台', level: '2GP', region: '广东省广州市天河区', status: 'active', totalPerformance: 580000.00, totalDividend: 17400.00, subscribeTime: '2025-11-20 09:00:00' },
+      { id: 'UPI002', type: 'supplier', typeName: '供应商合伙人', owner: '优鲜水果供应商', level: '1GP', region: '广东省深圳市南山区', status: 'active', totalPerformance: 125000.00, totalDividend: 3750.00, subscribeTime: '2026-01-10 14:30:00' },
+      { id: 'UPI003', type: 'store', typeName: '门店合伙人', owner: '社区便利店001', level: 'LP', region: '浙江省杭州市西湖区', status: 'active', totalPerformance: 45000.00, totalDividend: 1350.00, subscribeTime: '2026-03-05 10:15:00' },
+    ];
+
+    const partnerDetail = {
+      platform: { id: 'UPI001', type: 'platform', typeName: '平台合伙人', owner: '星马特平台', level: '2GP', levelName: '二级全球合伙人', region: '广东省广州市天河区', status: 'active', statusName: '生效中', totalPerformance: 580000.00, totalDividend: 17400.00, todayDividend: 256.00, subscribeTime: '2025-11-20 09:00:00' },
+      supplier: { id: 'UPI002', type: 'supplier', typeName: '供应商合伙人', owner: '优鲜水果供应商', level: '1GP', levelName: '一级全球合伙人', region: '广东省深圳市南山区', status: 'active', statusName: '生效中', totalPerformance: 125000.00, totalDividend: 3750.00, todayDividend: 58.00, subscribeTime: '2026-01-10 14:30:00' },
+      store: { id: 'UPI003', type: 'store', typeName: '门店合伙人', owner: '社区便利店001', level: 'LP', levelName: '实习合伙人', region: '浙江省杭州市西湖区', status: 'active', statusName: '生效中', totalPerformance: 45000.00, totalDividend: 1350.00, todayDividend: 28.00, subscribeTime: '2026-03-05 10:15:00' },
+    };
+
+    const dividendRecords = [
+      { id: 'D001', date: '2026-05-07', amount: 256.00, source: '平台订单', status: '已发放' },
+      { id: 'D002', date: '2026-05-06', amount: 198.00, source: '平台订单', status: '已发放' },
+      { id: 'D003', date: '2026-05-05', amount: 312.00, source: '平台订单', status: '已发放' },
+      { id: 'D004', date: '2026-05-04', amount: 187.00, source: '平台订单', status: '已发放' },
+      { id: 'D005', date: '2026-05-03', amount: 245.00, source: '平台订单', status: '已发放' },
+      { id: 'D006', date: '2026-05-02', amount: 289.00, source: '平台订单', status: '已发放' },
+      { id: 'D007', date: '2026-05-01', amount: 176.00, source: '平台订单', status: '已发放' },
+    ];
+
+    const supplierList = [
+      { id: 'S001', name: '优鲜水果供应商', region: '广东省深圳市', status: 'active' },
+      { id: 'S002', name: '鲜达生鲜供应链', region: '上海市浦东新区', status: 'active' },
+      { id: 'S003', name: '源头好货直供', region: '浙江省杭州市', status: 'active' },
+      { id: 'S004', name: '甄选食材专供', region: '北京市朝阳区', status: 'active' },
+    ];
+
+    const storeList = [
+      { id: 'ST001', name: '社区便利店001', region: '浙江省杭州市西湖区', status: 'active' },
+      { id: 'ST002', name: '生活超市002', region: '广东省广州市天河区', status: 'active' },
+      { id: 'ST003', name: '社区驿站003', region: '上海市浦东新区', status: 'active' },
+    ];
+
+    const levelList = [
+      { id: 'LP', name: 'LP', nameCn: '实习合伙人', dividendMode: '平分', dividendRate: 3, totalShares: null, remainingShares: null },
+      { id: '1GP', name: '1GP', nameCn: '一级全球合伙人', dividendMode: '按份额', dividendRate: 5, totalShares: 10, remainingShares: 6 },
+      { id: '2GP', name: '2GP', nameCn: '二级全球合伙人', dividendMode: '按份额', dividendRate: 8, totalShares: 10, remainingShares: 3 },
+    ];
+
+    const regionList = [
+      { id: 'R001', name: '广东省', level: 'province', fee: 5000 },
+      { id: 'R002', name: '广州市', level: 'city', parentId: 'R001', fee: 3000 },
+      { id: 'R003', name: '天河区', level: 'district', parentId: 'R002', fee: 2000 },
+      { id: 'R006', name: '浙江省', level: 'province', fee: 5000 },
+      { id: 'R007', name: '杭州市', level: 'city', parentId: 'R006', fee: 3000 },
+      { id: 'R008', name: '西湖区', level: 'district', parentId: 'R007', fee: 2000 },
+      { id: 'R009', name: '北京市', level: 'province', fee: 8000 },
+      { id: 'R010', name: '朝阳区', level: 'city', parentId: 'R009', fee: 5000 },
+    ];
+
+    let currentPage = 'home';
+    let currentApplyType = 'supplier';
+    let applyStep = 0;
+    let selectedSupplier = null;
+    let selectedStore = null;
+    let selectedLevel = null;
+    let selectedRegion = null;
+    let selectedShares = 1;
+    let showApplySuccess = false;
+    let detailType = 'platform';
+    let storeSearchValue = '';
+    let storeStatusFilter = 'all';
+
+    function formatAmount(amount) {
+      return amount?.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00';
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length !== 11) return phone;
+      return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+    }
+
+    function getTypeColor(type) {
+      const colors = { platform: '#FF6B00', supplier: '#1989fa', store: '#07c160' };
+      return colors[type] || '#FF6B00';
+    }
+
+    function getTypeIcon(type) {
+      const icons = { platform: '🏢', supplier: '🏭', store: '🏪' };
+      return icons[type] || '📋';
+    }
+
+    function getTypeClass(type) {
+      if (type === 'supplier') return 'supplier';
+      if (type === 'store') return 'store';
+      return '';
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      switch (currentPage) {
+        case 'home': app.innerHTML = renderHome(); break;
+        case 'user/partner': app.innerHTML = renderUserPartner(); break;
+        case 'user/partner/detail': app.innerHTML = renderPartnerDetail(); break;
+        case 'user/partner/apply-supplier': app.innerHTML = renderApplySupplier(); break;
+        case 'user/partner/apply-store': app.innerHTML = renderApplyStore(); break;
+        case 'store/partner': app.innerHTML = renderStorePartner(); break;
+      }
+    }
+
+    function renderHome() {
+      return `<div class="page"><div class="card" style="text-align:center;padding:20px"><h2 style="font-size:18px;color:#323233;margin-bottom:16px">欢迎使用供应链管理</h2><p style="font-size:14px;color:#969799">首页内容区域</p></div></div>`;
+    }
+
+    function renderUserPartner() {
+      const hasIdentity = userPartnerIdentities.length > 0;
+      let html = `<div class="page"><div class="card" style="text-align:center;padding:12px 0"><span style="font-size:16px;font-weight:bold">合伙人中心</span></div>`;
+
+      if (hasIdentity) {
+        userPartnerIdentities.forEach(identity => {
+          html += `<div class="card identity-card" onclick="goToDetail('${identity.type}')">
+            <div class="identity-header">
+              <div class="identity-icon ${identity.type}">${getTypeIcon(identity.type)}</div>
+              <div class="identity-info"><div class="identity-name">${identity.typeName}</div><div class="identity-owner">归属：${identity.owner}</div></div>
+              <div class="identity-status ${identity.status === 'active' ? '' : 'disabled'}">${identity.status === 'active' ? '生效中' : '已禁用'}</div>
+            </div>
+            <div class="identity-stats">
+              <div class="stat-item"><div class="stat-label">代理级别</div><div class="stat-value">${identity.level}</div></div>
+              <div class="stat-item"><div class="stat-label">认购地区</div><div class="stat-value" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${identity.region}</div></div>
+              <div class="stat-item"><div class="stat-label">累计业绩</div><div class="stat-value orange">¥${formatAmount(identity.totalPerformance)}</div></div>
+              <div class="stat-item"><div class="stat-label">累计分红</div><div class="stat-value green">¥${formatAmount(identity.totalDividend)}</div></div>
+            </div>
+            <div class="identity-time">认购时间：${identity.subscribeTime}</div>
+            <div class="identity-link ${getTypeClass(identity.type)}">查看详情 ›</div>
+          </div>`;
+        });
+
+        html += `<div class="card apply-card"><div class="apply-card-title">还没有合伙人身份？</div><div class="apply-card-btns">
+          <button class="apply-btn supplier" onclick="goToApply('supplier')">申请供应商合伙人</button>
+          <button class="apply-btn store" onclick="goToApply('store')">申请门店合伙人</button>
+        </div></div>`;
+      } else {
+        html += `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">您还没有合伙人身份</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <button class="empty-btn supplier" onclick="goToApply('supplier')">申请供应商合伙人</button>
+            <button class="empty-btn store" onclick="goToApply('store')">申请门店合伙人</button>
+          </div></div>`;
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderPartnerDetail() {
+      const detail = partnerDetail[detailType] || partnerDetail.platform;
+      const filteredRecords = dividendRecords.slice(0, 7);
+      const totalDividend = filteredRecords.reduce((sum, r) => sum + r.amount, 0);
+
+      return `<div class="page">
+        <div class="card" style="text-align:center;padding:12px 0;cursor:pointer" onclick="goBack('user/partner')">
+          <span style="float:left;font-size:20px">←</span>
+          <span style="font-size:16px;font-weight:bold">${detail.typeName}详情</span>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">归属信息</div>
+          <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">归属主体</div><div class="detail-value">${detail.owner}</div></div>
+            <div class="detail-item"><div class="detail-label">合伙人ID</div><div class="detail-value">${detail.id}</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">认购信息</div>
+          <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">等级</div><div class="detail-value">${detail.level} - ${detail.levelName}</div></div>
+            <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value green">${detail.statusName}</div></div>
+            <div class="detail-item" style="grid-column:span 2"><div class="detail-label">认购地区</div><div class="detail-value">${detail.region}</div></div>
+            <div class="detail-item" style="grid-column:span 2"><div class="detail-label">认购时间</div><div class="detail-value">${detail.subscribeTime}</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">业绩数据</div>
+          <div class="stats-row">
+            <div class="stats-card"><div class="stats-label">累计业绩</div><div class="stats-value orange">¥${formatAmount(detail.totalPerformance)}</div></div>
+            <div class="stats-card"><div class="stats-label">累计分红</div><div class="stats-value green">¥${formatAmount(detail.totalDividend)}</div></div>
+            <div class="stats-card"><div class="stats-label">今日分红</div><div class="stats-value blue">¥${formatAmount(detail.todayDividend)}</div></div>
+          </div>
+          <div class="time-tabs"><div class="time-tab active">近7天</div><div class="time-tab">近30天</div><div class="time-tab">全部</div><div class="time-tab">自定义</div></div>
+          <div class="dividend-summary"><div class="dividend-summary-label">近7天分红</div><div class="dividend-summary-value">¥${formatAmount(totalDividend)}</div></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">收益明细</div>
+          ${filteredRecords.map(record => `<div class="record-item"><div><div class="record-date">${record.date}</div><div class="record-source">${record.source}</div></div><div class="record-amount">+¥${formatAmount(record.amount)}</div></div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    function renderApplySupplier() {
+      if (showApplySuccess) {
+        return `<div class="success-page"><div class="success-icon">✓</div><div class="success-title">申请提交成功</div><div class="success-text">请等待供应商审核，审核结果将通过短信通知</div><button class="success-btn supplier" onclick="goToPage('user/partner')">返回合伙人中心</button></div>`;
+      }
+
+      const stepColor = '#FF6B00';
+      const stepTitles = ['选择供应商', '选择等级', '选择地区', '确认申请'];
+
+      let html = `<div class="page"><div class="page-header"><span class="back-btn" onclick="goToPage('user/partner')">←</span><span class="page-title">申请供应商合伙人</span></div>
+        <div class="steps">${stepTitles.map((title, index) => `<div class="step"><div class="step-num ${index <= applyStep ? 'active supplier' : ''}" style="${index <= applyStep ? 'background:' + stepColor + ';color:#fff' : ''}">${index + 1}</div><div class="step-label ${index <= applyStep ? 'active' : ''}" style="${index <= applyStep ? 'color:' + stepColor : ''}">${title}</div>${index < 3 ? `<div class="step-line" style="${index < applyStep ? 'background:' + stepColor : ''}"></div>` : ''}</div>`).join('')}</div>
+        <div class="option-list">`;
+
+      if (applyStep === 0) {
+        supplierList.forEach(s => { html += `<div class="option-item supplier ${selectedSupplier?.id === s.id ? 'selected' : ''}" onclick="selectSupplier('${s.id}')"><div class="option-item-header"><div class="option-radio"><div class="option-radio-inner" style="background:#fff"></div></div><div><div class="option-name">${s.name}</div><div class="option-desc">${s.region}</div></div></div></div>`; });
+      } else if (applyStep === 1) {
+        levelList.forEach(level => { html += `<div class="level-item supplier ${selectedLevel?.id === level.id ? 'selected' : ''}" onclick="selectLevel('${level.id}')"><div class="level-header"><div class="option-radio" style="margin-right:12px"><div class="option-radio-inner" style="background:#fff"></div></div><div class="level-name">${level.name} - ${level.nameCn}</div></div><div class="level-detail"><div class="level-detail-row"><span class="level-detail-label">分红模式：</span><span>${level.dividendMode}</span></div><div class="level-detail-row"><span class="level-detail-label">分红比例：</span><span class="level-detail-value">${level.dividendRate}%</span></div>${level.totalShares ? `<div class="level-detail-row"><span class="level-detail-label">剩余份额：</span><span style="color:#FF6B00;font-weight:bold">${level.remainingShares}/${level.totalShares}</span></div>` : ''}</div></div>`; });
+      } else if (applyStep === 2) {
+        html += `<div style="font-size:14px;color:#969799;margin-bottom:12px">选择归属地区：</div>`;
+        regionList.filter(r => r.level === 'province').forEach(region => { html += `<div class="option-item supplier ${selectedRegion?.id === region.id ? 'selected' : ''}" onclick="selectRegion('${region.id}')"><div style="display:flex;justify-content:space-between;align-items:center"><div class="option-name">${region.name}</div>${selectedRegion?.id === region.id ? `<div class="option-price supplier">¥${region.fee}</div>` : ''}</div></div>`; });
+        if (selectedLevel?.dividendMode === '按份额') {
+          html += `<div class="slider-container"><div class="slider-title">选择认购份额</div><div class="slider-row"><input type="range" class="slider-input" min="1" max="${selectedLevel.remainingShares || 1}" value="${selectedShares}" oninput="updateShares(this.value)" style="-webkit-appearance:none;height:4px;background:#eee;border-radius:2px;flex:1"><span class="slider-value" style="color:#FF6B00">${selectedShares}份</span></div></div>`;
+        }
+      } else if (applyStep === 3) {
+        html += `<div class="card"><div class="card-title">申请信息确认</div>
+          <div class="confirm-item"><span class="confirm-label">归属供应商</span><span class="confirm-value">${selectedSupplier?.name || '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">合伙人等级</span><span class="confirm-value">${selectedLevel ? selectedLevel.name + ' - ' + selectedLevel.nameCn : '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">认购地区</span><span class="confirm-value">${selectedRegion?.name || '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">认购份额</span><span class="confirm-value">${selectedLevel?.dividendMode === '按份额' ? selectedShares + '份' : '不分份额'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">分红模式</span><span class="confirm-value">${selectedLevel?.dividendMode || '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">分红比例</span><span class="confirm-value">${selectedLevel ? selectedLevel.dividendRate + '%' : '-'}</span></div>
+        </div><div class="notice"><p>1. 认购费用由您与供应商线下协商支付；</p><p>2. 平台仅记录归属关系，不代收认购费用；</p><p>3. 支付完成后，合伙人资格即时生效。</p></div>`;
+      }
+
+      html += `</div><div class="bottom-btns">${applyStep > 0 ? '<button class="bottom-btn" onclick="prevStep()">上一步</button>' : ''}<button class="bottom-btn primary supplier" onclick="${applyStep === 3 ? 'submitApply()' : 'nextStep()'}" ${!canNext() ? 'disabled' : ''}>${applyStep === 3 ? '确认申请' : '下一步'}</button></div></div>`;
+      return html;
+    }
+
+    function renderApplyStore() {
+      if (showApplySuccess) {
+        return `<div class="success-page"><div class="success-icon">✓</div><div class="success-title">申请提交成功</div><div class="success-text">请等待门店审核，审核结果将通过短信通知</div><button class="success-btn" onclick="goToPage('user/partner')">返回合伙人中心</button></div>`;
+      }
+
+      const stepColor = '#07c160';
+      const stepTitles = ['选择门店', '选择等级', '选择地区', '确认申请'];
+
+      let html = `<div class="page"><div class="page-header"><span class="back-btn" onclick="goToPage('user/partner')">←</span><span class="page-title">申请门店合伙人</span></div>
+        <div class="steps">${stepTitles.map((title, index) => `<div class="step"><div class="step-num ${index <= applyStep ? 'active' : ''}" style="${index <= applyStep ? 'background:' + stepColor + ';color:#fff' : ''}">${index + 1}</div><div class="step-label ${index <= applyStep ? 'active' : ''}" style="${index <= applyStep ? 'color:' + stepColor : ''}">${title}</div>${index < 3 ? `<div class="step-line" style="${index < applyStep ? 'background:' + stepColor : ''}"></div>` : ''}</div>`).join('')}</div>
+        <div class="option-list">`;
+
+      if (applyStep === 0) {
+        storeList.forEach(s => { html += `<div class="option-item ${selectedStore?.id === s.id ? 'selected' : ''}" onclick="selectStore('${s.id}')"><div class="option-item-header"><div class="option-radio"><div class="option-radio-inner" style="background:#fff"></div></div><div><div class="option-name">${s.name}</div><div class="option-desc">${s.region}</div></div></div></div>`; });
+      } else if (applyStep === 1) {
+        levelList.forEach(level => { html += `<div class="level-item ${selectedLevel?.id === level.id ? 'selected' : ''}" onclick="selectStoreLevel('${level.id}')"><div class="level-header"><div class="option-radio" style="margin-right:12px"><div class="option-radio-inner" style="background:#fff"></div></div><div class="level-name">${level.name} - ${level.nameCn}</div></div><div class="level-detail"><div class="level-detail-row"><span class="level-detail-label">分红模式：</span><span>${level.dividendMode}</span></div><div class="level-detail-row"><span class="level-detail-label">分红比例：</span><span class="level-detail-value">${level.dividendRate}%</span></div>${level.totalShares ? `<div class="level-detail-row"><span class="level-detail-label">剩余份额：</span><span style="color:#07c160;font-weight:bold">${level.remainingShares}/${level.totalShares}</span></div>` : ''}</div></div>`; });
+      } else if (applyStep === 2) {
+        html += `<div style="font-size:14px;color:#969799;margin-bottom:12px">选择归属地区：</div>`;
+        regionList.filter(r => r.level === 'province').forEach(region => { html += `<div class="option-item ${selectedRegion?.id === region.id ? 'selected' : ''}" onclick="selectStoreRegion('${region.id}')"><div style="display:flex;justify-content:space-between;align-items:center"><div class="option-name">${region.name}</div>${selectedRegion?.id === region.id ? `<div class="option-price">¥${region.fee}</div>` : ''}</div></div>`; });
+        if (selectedLevel?.dividendMode === '按份额') {
+          html += `<div class="slider-container"><div class="slider-title">选择认购份额</div><div class="slider-row"><input type="range" class="slider-input" min="1" max="${selectedLevel.remainingShares || 1}" value="${selectedShares}" oninput="updateStoreShares(this.value)" style="-webkit-appearance:none;height:4px;background:#eee;border-radius:2px;flex:1"><span class="slider-value">${selectedShares}份</span></div></div>`;
+        }
+      } else if (applyStep === 3) {
+        html += `<div class="card"><div class="card-title">申请信息确认</div>
+          <div class="confirm-item"><span class="confirm-label">归属门店</span><span class="confirm-value">${selectedStore?.name || '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">合伙人等级</span><span class="confirm-value">${selectedLevel ? selectedLevel.name + ' - ' + selectedLevel.nameCn : '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">认购地区</span><span class="confirm-value">${selectedRegion?.name || '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">认购份额</span><span class="confirm-value">${selectedLevel?.dividendMode === '按份额' ? selectedShares + '份' : '不分份额'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">分红模式</span><span class="confirm-value">${selectedLevel?.dividendMode || '-'}</span></div>
+          <div class="confirm-item"><span class="confirm-label">分红比例</span><span class="confirm-value">${selectedLevel ? selectedLevel.dividendRate + '%' : '-'}</span></div>
+        </div><div class="notice"><p>1. 认购费用由您与门店线下协商支付；</p><p>2. 平台仅记录归属关系，不代收认购费用；</p><p>3. 支付完成后，合伙人资格即时生效。</p></div>`;
+      }
+
+      html += `</div><div class="bottom-btns">${applyStep > 0 ? '<button class="bottom-btn" onclick="prevStoreStep()">上一步</button>' : ''}<button class="bottom-btn primary" onclick="${applyStep === 3 ? 'submitStoreApply()' : 'nextStoreStep()'}" ${!canStoreNext() ? 'disabled' : ''}>${applyStep === 3 ? '确认申请' : '下一步'}</button></div></div>`;
+      return html;
+    }
+
+    function renderStorePartner() {
+      const filteredList = storePartnerList.filter(item => {
+        const matchSearch = item.nickname.includes(storeSearchValue) || item.phone.includes(storeSearchValue) || item.region.includes(storeSearchValue);
+        const matchStatus = storeStatusFilter === 'all' || (storeStatusFilter === 'active' && item.status === 'active') || (storeStatusFilter === 'disabled' && item.status === 'disabled');
+        return matchSearch && matchStatus;
+      });
+
+      let html = `<div class="page"><div class="search-bar"><input type="search" class="search-input" placeholder="搜索昵称/手机/地区" value="${storeSearchValue}" oninput="updateStoreSearch(this.value)"><select class="filter-select" value="${storeStatusFilter}" onchange="updateStoreStatus(this.value)"><option value="all">全部状态</option><option value="active">生效中</option><option value="disabled">已禁用</option></select></div><div style="padding:0 12px">`;
+
+      if (filteredList.length === 0) {
+        html += `<div class="empty-state" style="margin-top:12px"><div class="empty-icon">📭</div><div class="empty-text">暂无合伙人数据</div></div>`;
+      } else {
+        filteredList.forEach(partner => {
+          html += `<div class="partner-item">
+            <div class="partner-header"><div class="partner-user"><div class="partner-avatar">${partner.nickname.charAt(0)}</div><div><div class="partner-name">${partner.nickname}</div><div class="partner-phone">${maskPhone(partner.phone)}</div></div></div>
+              <div class="partner-status ${partner.status === 'active' ? '' : 'disabled'}">${partner.status === 'active' ? '生效中' : '已禁用'}</div>
+            </div>
+            <div class="partner-stats">
+              <div class="partner-stat"><div class="partner-stat-label">代理级别</div><div class="partner-stat-value">${partner.level}</div></div>
+              <div class="partner-stat"><div class="partner-stat-label">认购地区</div><div class="partner-stat-value" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${partner.region}</div></div>
+              <div class="partner-stat"><div class="partner-stat-label">累计业绩</div><div class="partner-stat-value orange">¥${formatAmount(partner.totalPerformance)}</div></div>
+              <div class="partner-stat"><div class="partner-stat-label">累计分红</div><div class="partner-stat-value green">¥${formatAmount(partner.totalDividend)}</div></div>
+            </div>
+            <div class="partner-time">认购时间：${partner.subscribeTime}</div>
+            <div class="partner-actions">
+              <button class="partner-action" onclick="showStoreDividend('${partner.id}')">收益明细</button>
+              <button class="partner-action ${partner.status === 'active' ? 'danger' : 'green'}" onclick="toggleStoreStatus('${partner.id}')">${partner.status === 'active' ? '禁用' : '恢复'}</button>
+            </div>
+          </div>`;
+        });
+      }
+
+      html += '</div></div>';
+      return html;
+    }
+
+    function switchTab(page) {
+      currentPage = page;
+      document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.tab-item[data-page="${page}"]`)?.classList.add('active');
+      render();
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      if (page === 'user/partner' || page === 'store/partner') {
+        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.tab-item[data-page="${page}"]`)?.classList.add('active');
+      }
+      render();
+    }
+
+    function goToDetail(type) { detailType = type; goToPage('user/partner/detail'); }
+    function goToApply(type) { currentApplyType = type; applyStep = 0; selectedSupplier = null; selectedStore = null; selectedLevel = null; selectedRegion = null; selectedShares = 1; showApplySuccess = false; goToPage('user/partner/apply-' + type); }
+    function goBack(page) { goToPage(page); }
+
+    function canNext() { switch (applyStep) { case 0: return !!selectedSupplier; case 1: return !!selectedLevel; case 2: return !!selectedRegion; case 3: return true; default: return false; } }
+    function canStoreNext() { switch (applyStep) { case 0: return !!selectedStore; case 1: return !!selectedLevel; case 2: return !!selectedRegion; case 3: return true; default: return false; } }
+
+    function selectSupplier(id) { selectedSupplier = supplierList.find(s => s.id === id); render(); }
+    function selectLevel(id) { selectedLevel = levelList.find(l => l.id === id); selectedShares = 1; render(); }
+    function selectRegion(id) { selectedRegion = regionList.find(r => r.id === id); render(); }
+    function updateShares(value) { selectedShares = parseInt(value); render(); }
+    function nextStep() { if (canNext()) { applyStep++; render(); } }
+    function prevStep() { if (applyStep > 0) { applyStep--; render(); } }
+    function submitApply() { if (confirm(`确定要申请成为"${selectedSupplier?.name}"的合伙人吗？`)) { showApplySuccess = true; render(); } }
+
+    function selectStore(id) { selectedStore = storeList.find(s => s.id === id); render(); }
+    function selectStoreLevel(id) { selectedLevel = levelList.find(l => l.id === id); selectedShares = 1; render(); }
+    function selectStoreRegion(id) { selectedRegion = regionList.find(r => r.id === id); render(); }
+    function updateStoreShares(value) { selectedShares = parseInt(value); render(); }
+    function nextStoreStep() { if (canStoreNext()) { applyStep++; render(); } }
+    function prevStoreStep() { if (applyStep > 0) { applyStep--; render(); } }
+    function submitStoreApply() { if (confirm(`确定要申请成为"${selectedStore?.name}"的合伙人吗？`)) { showApplySuccess = true; render(); } }
+
+    function updateStoreSearch(value) { storeSearchValue = value; render(); }
+    function updateStoreStatus(value) { storeStatusFilter = value; render(); }
+
+    function showStoreDividend(id) {
+      const partner = storePartnerList.find(p => p.id === id);
+      if (partner) {
+        document.getElementById('dividend-title').textContent = partner.nickname + ' - 收益明细';
+        document.getElementById('dividend-list').innerHTML = dividendRecords.slice(0, 7).map(record => `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5"><div><div style="font-size:14px;margin-bottom:4px">${record.date}</div><div style="font-size:12px;color:#969799">${record.source}</div></div><div style="font-size:16px;font-weight:bold;color:#07c160">+¥${formatAmount(record.amount)}</div></div>`).join('');
+        document.getElementById('popup-dividend').classList.add('show');
+      }
+    }
+
+    function closePopup(id) { document.getElementById(id).classList.remove('show'); }
+    function toggleStoreStatus(id) { const partner = storePartnerList.find(p => p.id === id); if (partner) { const action = partner.status === 'active' ? '禁用' : '恢复'; if (confirm(`确定要${action}合伙人"${partner.nickname}"吗？`)) { render(); } } }
+
+    document.getElementById('popup-dividend').addEventListener('click', function(e) { if (e.target === this) { this.classList.remove('show'); } });
+
+    render();
+  </script>
+</body>
+</html>

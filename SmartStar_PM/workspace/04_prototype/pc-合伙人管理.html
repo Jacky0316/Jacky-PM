@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>供应链后台管理系统</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #333; background: #f5f5f5; }
+
+    /* 布局 */
+    .layout { display: flex; height: 100vh; }
+    .sidebar { width: 200px; background: #fff; border-right: 1px solid #f0f0f0; display: flex; flex-direction: column; }
+    .sidebar-logo { height: 64px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f0f0f0; font-size: 16px; font-weight: bold; color: #FF6B00; }
+    .sidebar-menu { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .menu-item { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #333; transition: all 0.2s; }
+    .menu-item:hover { background: #fafafa; }
+    .menu-item.active { background: #fff7f0; color: #FF6B00; border-right: 2px solid #FF6B00; }
+    .menu-item .icon { font-size: 16px; }
+    .menu-group { margin-bottom: 4px; }
+    .menu-group-title { padding: 8px 16px; font-size: 12px; color: #999; }
+    .menu-sub-item { padding: 10px 16px 10px 40px; cursor: pointer; color: #666; font-size: 14px; transition: all 0.2s; }
+    .menu-sub-item:hover { background: #fafafa; }
+    .menu-sub-item.active { color: #FF6B00; background: #fff7f0; }
+
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .header { height: 48px; background: #fff; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; padding: 0 16px; }
+    .header-tabs { display: flex; gap: 0; }
+    .header-tab { padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; font-size: 14px; transition: all 0.2s; }
+    .header-tab.active { color: #FF6B00; border-bottom-color: #FF6B00; }
+    .header-tab:hover { color: #FF6B00; }
+    .content { flex: 1; overflow: auto; padding: 16px; }
+
+    /* 卡片 */
+    .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 16px; font-weight: 500; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+
+    /* 按钮 */
+    .btn { padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; background: #fff; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+    .btn:hover { border-color: #FF6B00; color: #FF6B00; }
+    .btn-primary { background: #FF6B00; color: #fff; border-color: #FF6B00; }
+    .btn-primary:hover { background: #e56100; }
+    .btn-success { background: #07c160; color: #fff; border-color: #07c160; }
+    .btn-success:hover { background: #06a352; }
+    .btn-link { border: none; background: none; color: #1890ff; padding: 4px 8px; }
+    .btn-link:hover { color: #40a9ff; }
+    .btn-link-danger { border: none; background: none; color: #ff4d4f; padding: 4px 8px; }
+    .btn-link-danger:hover { color: #ff7875; }
+
+    /* 表格 */
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 12px 8px; border: 1px solid #f0f0f0; text-align: left; font-size: 14px; }
+    .table th { background: #fafafa; font-weight: 500; color: #666; }
+    .table tr:hover td { background: #fafafa; }
+    .table-wrapper { overflow-x: auto; }
+
+    /* 搜索栏 */
+    .search-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .search-input { padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; width: 150px; font-size: 14px; }
+    .search-input:focus { outline: none; border-color: #FF6B00; }
+
+    /* 标签 */
+    .tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .tag-orange { background: #fff7f0; color: #FF6B00; }
+    .tag-blue { background: #e6f4ff; color: #1890ff; }
+    .tag-green { background: #f6ffed; color: #52c41a; }
+
+    /* 模态框 */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 8px; min-width: 400px; max-width: 800px; max-height: 80vh; overflow: auto; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 16px; font-weight: 500; }
+    .modal-close { font-size: 20px; cursor: pointer; color: #999; }
+    .modal-close:hover { color: #333; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 12px; }
+
+    /* 表单 */
+    .form-item { margin-bottom: 16px; }
+    .form-label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; }
+    .form-input { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; }
+    .form-input:focus { outline: none; border-color: #FF6B00; }
+    .form-select { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; background: #fff; }
+    .form-row { display: flex; gap: 12px; align-items: flex-start; }
+
+    /* 欢迎页 */
+    .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666; text-align: center; }
+    .welcome-icon { font-size: 64px; color: #FF6B00; margin-bottom: 16px; }
+    .welcome h2 { color: #333; margin-bottom: 8px; }
+    .welcome p { color: #999; }
+
+    /* 状态徽章 */
+    .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
+    .status-active { background: #52c41a; }
+    .status-pending { background: #faad14; }
+    .status-disabled { background: #ff4d4f; }
+
+    /* 弹窗内表格 */
+    .inner-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .inner-table th, .inner-table td { padding: 8px 12px; border: 1px solid #f0f0f0; text-align: left; font-size: 13px; }
+    .inner-table th { background: #fafafa; }
+
+    /* Tab切换 */
+    .tab-nav { display: flex; gap: 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+    .tab-item { padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; font-size: 14px; transition: all 0.2s; }
+    .tab-item.active { color: #FF6B00; border-bottom-color: #FF6B00; }
+
+    /* 分页 */
+    .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 16px; }
+    .page-btn { padding: 4px 12px; border: 1px solid #d9d9d9; border-radius: 4px; cursor: pointer; background: #fff; font-size: 14px; }
+    .page-btn:hover { border-color: #FF6B00; color: #FF6B00; }
+    .page-btn.active { background: #FF6B00; color: #fff; border-color: #FF6B00; }
+
+    /* 规则卡片 */
+    .rule-cards { display: flex; flex-wrap: wrap; gap: 20px; }
+    .rule-card { background: #fafafa; border-radius: 8px; padding: 20px; width: 300px; border-top: 3px solid #FF6B00; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .rule-card-header { margin-bottom: 12px; }
+    .rule-card-title { display: inline-block; padding: 4px 16px; border-radius: 4px; font-size: 16px; font-weight: bold; }
+    .rule-card-title.orange { background: #fff7f0; color: #FF6B00; }
+    .rule-card-title.blue { background: #e6f4ff; color: #1890ff; }
+    .rule-card-title.green { background: #f6ffed; color: #52c41a; }
+    .rule-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #f0f0f0; font-size: 14px; }
+    .rule-row-label { color: #888; }
+    .rule-row-value { font-weight: 500; }
+    .rule-row-value.orange { color: #FF6B00; }
+    .rule-row-value.blue { color: #1890ff; }
+
+    /* 切换按钮组 */
+    .btn-group { display: flex; gap: 0; margin-bottom: 16px; }
+    .btn-group-item { padding: 8px 20px; border: 1px solid #d9d9d9; cursor: pointer; background: #fff; font-size: 14px; transition: all 0.2s; }
+    .btn-group-item:first-child { border-radius: 4px 0 0 4px; }
+    .btn-group-item:last-child { border-radius: 0 4px 4px 0; }
+    .btn-group-item.active { background: #FF6B00; color: #fff; border-color: #FF6B00; }
+
+    /* 工具类 */
+    .text-orange { color: #FF6B00; }
+    .text-green { color: #52c41a; }
+    .text-blue { color: #1890ff; }
+    .text-red { color: #ff4d4f; }
+    .text-gray { color: #999; }
+    .mt-12 { margin-top: 12px; }
+    .mb-12 { margin-bottom: 12px; }
+    .flex { display: flex; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <div class="sidebar-logo">供应链后台</div>
+      <div class="sidebar-menu">
+        <div class="menu-item active" data-path="home" onclick="switchPage('home')">
+          <span class="icon">🏠</span>
+          <span>首页</span>
+        </div>
+        <div class="menu-group">
+          <div class="menu-group-title">商城管理</div>
+          <div class="menu-sub-item" data-path="mall/offline-merchant" onclick="switchPage('mall/offline-merchant')">线下商家管理</div>
+          <div class="menu-sub-item" data-path="mall/online-store" onclick="switchPage('mall/online-store')">线上店铺列表</div>
+        </div>
+        <div class="menu-group">
+          <div class="menu-group-title">会员管理</div>
+          <div class="menu-sub-item active" data-path="partner" onclick="switchPage('partner')">合伙人管理</div>
+          <div class="menu-sub-item" data-path="partner/rule-config" onclick="switchPage('partner/rule-config')">合伙人规则配置</div>
+        </div>
+        <div class="menu-group">
+          <div class="menu-group-title">供应端</div>
+          <div class="menu-sub-item" data-path="supplier/partner" onclick="switchPage('supplier/partner')">合伙人管理</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main">
+      <!-- 头部Tab -->
+      <div class="header">
+        <div class="header-tabs">
+          <div class="header-tab" id="tab-home" onclick="switchPage('home')">首页</div>
+          <div class="header-tab" id="tab-mall/offline-merchant" onclick="switchPage('mall/offline-merchant')">线下商家管理</div>
+          <div class="header-tab" id="tab-mall/online-store" onclick="switchPage('mall/online-store')">线上店铺列表</div>
+          <div class="header-tab active" id="tab-partner" onclick="switchPage('partner')">合伙人管理</div>
+          <div class="header-tab" id="tab-partner/rule-config" onclick="switchPage('partner/rule-config')">规则配置</div>
+          <div class="header-tab" id="tab-supplier/partner" onclick="switchPage('supplier/partner')">供应端合伙人</div>
+        </div>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="content" id="content">
+        <!-- 动态渲染内容 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加合伙人弹窗 -->
+  <div class="modal-overlay" id="modal-add-partner">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-add-title">添加合伙人</div>
+        <span class="modal-close" onclick="closeModal('modal-add-partner')">×</span>
+      </div>
+      <div class="modal-body">
+        <form id="form-add-partner">
+          <div class="form-item">
+            <label class="form-label" id="label-supplier-store">归属供应商</label>
+            <select class="form-select" id="select-supplier-store">
+              <option value="">请选择</option>
+              <option value="优鲜供应链">优鲜供应链</option>
+              <option value="绿野食品">绿野食品</option>
+              <option value="汇农实业">汇农实业</option>
+              <option value="润禾农业">润禾农业</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">会员查询</label>
+            <div class="flex gap-8">
+              <input type="text" class="form-input" placeholder="输入手机号或昵称查询" style="flex:1">
+              <button type="button" class="btn btn-primary">查询</button>
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="form-label">查询结果</label>
+            <div style="padding: 12px; background: #f5f5f5; border-radius: 6px;">
+              <div style="color: #52c41a; font-size: 12px;">已认证 √</div>
+              <div style="margin-top: 4px; font-size: 14px;">会员编号：100001  昵称：张三  手机号：138****8888</div>
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="form-label">代理级别</label>
+            <select class="form-select">
+              <option value="">请选择</option>
+              <option value="LP">LP</option>
+              <option value="1GP">1GP</option>
+              <option value="2GP">2GP</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">归属地区</label>
+            <select class="form-select">
+              <option value="">请选择</option>
+              <option value="北京市-朝阳区">北京市-朝阳区</option>
+              <option value="北京市-海淀区">北京市-海淀区</option>
+              <option value="北京市-东城区">北京市-东城区</option>
+              <option value="北京市-西城区">北京市-西城区</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">认购份数</label>
+            <input type="number" class="form-input" placeholder="请输入认购份数">
+          </div>
+          <div class="form-item">
+            <label class="form-label">认购金额</label>
+            <input type="number" class="form-input" placeholder="请输入认购金额">
+          </div>
+          <div class="form-item">
+            <label class="form-label">状态</label>
+            <label style="margin-right: 20px;"><input type="radio" name="status" value="正常" checked> 启用</label>
+            <label><input type="radio" name="status" value="禁用"> 禁用</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-add-partner')">取消</button>
+        <button class="btn btn-primary" onclick="submitAddPartner()">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑合伙人弹窗 -->
+  <div class="modal-overlay" id="modal-edit-partner">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title">编辑合伙人</div>
+        <span class="modal-close" onclick="closeModal('modal-edit-partner')">×</span>
+      </div>
+      <div class="modal-body">
+        <form id="form-edit-partner">
+          <div class="form-item">
+            <label class="form-label">昵称</label>
+            <input type="text" class="form-input" id="edit-nickname" disabled>
+          </div>
+          <div class="form-item">
+            <label class="form-label">手机号</label>
+            <input type="text" class="form-input" id="edit-phone" disabled>
+          </div>
+          <div class="form-item">
+            <label class="form-label">代理级别</label>
+            <select class="form-select" id="edit-level">
+              <option value="LP">LP</option>
+              <option value="1GP">1GP</option>
+              <option value="2GP">2GP</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">归属地区</label>
+            <select class="form-select" id="edit-region">
+              <option value="北京市-朝阳区">北京市-朝阳区</option>
+              <option value="北京市-海淀区">北京市-海淀区</option>
+              <option value="北京市-东城区">北京市-东城区</option>
+              <option value="北京市-西城区">北京市-西城区</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">认购份数</label>
+            <input type="number" class="form-input" id="edit-shares">
+          </div>
+          <div class="form-item">
+            <label class="form-label">认购金额</label>
+            <input type="number" class="form-input" id="edit-fee">
+          </div>
+          <div class="form-item">
+            <label class="form-label">状态</label>
+            <label style="margin-right: 20px;"><input type="radio" name="edit-status" value="正常" checked> 启用</label>
+            <label><input type="radio" name="edit-status" value="禁用"> 禁用</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-edit-partner')">取消</button>
+        <button class="btn btn-primary" onclick="submitEditPartner()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收益明细弹窗 -->
+  <div class="modal-overlay" id="modal-revenue">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <div class="modal-title">收益明细</div>
+        <span class="modal-close" onclick="closeModal('modal-revenue')">×</span>
+      </div>
+      <div class="modal-body">
+        <p id="revenue-partner-info" style="margin-bottom: 16px;">合伙人：张三 - 13800138001</p>
+        <table class="inner-table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>金额(元)</th>
+              <th>类型</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="revenue-table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 开通合伙人确认弹窗 -->
+  <div class="modal-overlay" id="modal-open-partner">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title">开通合伙人功能</div>
+        <span class="modal-close" onclick="closeModal('modal-open-partner')">×</span>
+      </div>
+      <div class="modal-body">
+        <p id="open-partner-name">确定要为「优鲜供应链」开通合伙人功能吗？</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-open-partner')">取消</button>
+        <button class="btn btn-primary" onclick="confirmOpenPartner()">确认开通</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑规则弹窗 -->
+  <div class="modal-overlay" id="modal-edit-rule">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title" id="rule-modal-title">编辑LP等级配置</div>
+        <span class="modal-close" onclick="closeModal('modal-edit-rule')">×</span>
+      </div>
+      <div class="modal-body">
+        <form id="form-edit-rule">
+          <div class="form-item">
+            <label class="form-label">等级</label>
+            <input type="text" class="form-input" id="rule-level" disabled>
+          </div>
+          <div class="form-item">
+            <label class="form-label">分红比例</label>
+            <input type="text" class="form-input" id="rule-ratio" placeholder="如：80%">
+          </div>
+          <div class="form-item">
+            <label class="form-label">分红模式</label>
+            <select class="form-select" id="rule-mode">
+              <option value="平分">平分</option>
+              <option value="按份额">按份额</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">省级分红</label>
+            <input type="text" class="form-input" id="rule-provincial" placeholder="如：8%">
+          </div>
+          <div class="form-item">
+            <label class="form-label">市级分红</label>
+            <input type="text" class="form-input" id="rule-city" placeholder="如：5%">
+          </div>
+          <div class="form-item">
+            <label class="form-label">区级分红</label>
+            <input type="text" class="form-input" id="rule-district" placeholder="如：3%">
+          </div>
+          <div class="form-item">
+            <label class="form-label">街道分红</label>
+            <input type="text" class="form-input" id="rule-street" placeholder="如：1%">
+          </div>
+          <div class="form-item">
+            <label class="form-label">认购份额</label>
+            <input type="number" class="form-input" id="rule-shares" placeholder="请输入整数">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-edit-rule')">取消</button>
+        <button class="btn btn-primary" onclick="submitEditRule()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ 数据定义 ============
+    const supplierList = [
+      { id: 86, name: '华联商贸', category: '综合', memberNickname: '陈小明', memberPhone: '13800138888', legalPerson: '陈大明', legalIdCard: '110101198801011234', contactName: '陈中明', contactPhone: '13800138889', submitTime: '2025-10-19 09:15:00', auditTime: '', auditStatus: 'pending', partnerStatus: false },
+      { id: 87, name: '鑫源食品', category: '食品', memberNickname: '刘老板', memberPhone: '13800138890', legalPerson: '刘老大', legalIdCard: '110101197701021234', contactName: '刘老二', contactPhone: '13800138891', submitTime: '2025-10-19 11:20:00', auditTime: '', auditStatus: 'pending', partnerStatus: false },
+      { id: 1, name: '优鲜供应链', category: '生鲜食品', memberNickname: '张三', memberPhone: '13800138001', legalPerson: '李四', legalIdCard: '110101199001011234', contactName: '王五', contactPhone: '13800138002', submitTime: '2025-10-15 10:30:00', auditTime: '2025-10-15 14:00:00', auditStatus: 'approved', partnerStatus: true },
+      { id: 2, name: '绿野食品', category: '农产品', memberNickname: '李娜', memberPhone: '13800138003', legalPerson: '赵六', legalIdCard: '110101199002022345', contactName: '钱七', contactPhone: '13800138004', submitTime: '2025-10-16 09:00:00', auditTime: '2025-10-16 11:30:00', auditStatus: 'approved', partnerStatus: false },
+      { id: 88, name: '鲜达生鲜', category: '生鲜食品', memberNickname: '王强', memberPhone: '13800138005', legalPerson: '孙八', legalIdCard: '110101199003033456', contactName: '周九', contactPhone: '13800138006', submitTime: '2025-10-17 08:30:00', auditTime: '2025-10-17 10:00:00', auditStatus: 'approved', partnerStatus: false },
+      { id: 89, name: '汇农实业', category: '农产品', memberNickname: '赵丽', memberPhone: '13800138007', legalPerson: '吴十', legalIdCard: '110101199004044567', contactName: '郑一', contactPhone: '13800138008', submitTime: '2025-10-18 09:00:00', auditTime: '2025-10-18 11:00:00', auditStatus: 'approved', partnerStatus: true },
+      { id: 90, name: '润禾农业', category: '农产品', memberNickname: '杨玲', memberPhone: '13800138011', legalPerson: '黄四', legalIdCard: '110101199006066789', contactName: '萧五', contactPhone: '13800138012', submitTime: '2025-10-18 14:00:00', auditTime: '2025-10-18 16:00:00', auditStatus: 'approved', partnerStatus: false },
+      { id: 5, name: '金穗米业', category: '粮油', memberNickname: '刘洋', memberPhone: '13800138013', legalPerson: '陈二', legalIdCard: '110101199005055678', contactName: '林三', contactPhone: '13800138014', submitTime: '2025-10-10 16:00:00', auditTime: '2025-10-12 18:00:00', auditStatus: 'rejected', partnerStatus: false },
+      { id: 6, name: '恒丰粮油', category: '粮油', memberNickname: '杨玲', memberPhone: '13800138015', legalPerson: '黄四', legalIdCard: '110101199006066780', contactName: '萧五', contactPhone: '13800138016', submitTime: '2025-09-20 10:00:00', auditTime: '2025-09-20 12:00:00', auditStatus: 'offline', partnerStatus: false },
+    ];
+
+    const storeList = [
+      { id: 91, name: '朝阳路分店', category: '综合', memberNickname: '马小云', memberPhone: '13900139091', legalPerson: '马化腾', legalIdCard: '440301197501011234', contactName: '张小明', contactPhone: '13900139001', submitTime: '2025-10-19 08:00:00', auditTime: '', auditStatus: 'pending', partnerStatus: false },
+      { id: 92, name: '海淀黄庄分店', category: '数码', memberNickname: '李小红', memberPhone: '13900139092', legalPerson: '李大为', legalIdCard: '110108197602022345', contactName: '李中为', contactPhone: '13900139002', submitTime: '2025-10-19 09:30:00', auditTime: '', auditStatus: 'pending', partnerStatus: false },
+      { id: 1, name: '朝阳店', category: '综合', memberNickname: '张伟', memberPhone: '13900139011', legalPerson: '张总', legalIdCard: '110101198001011234', contactName: '张助理', contactPhone: '13900139001', submitTime: '2025-10-01 09:00:00', auditTime: '2025-10-01 12:00:00', auditStatus: 'approved', partnerStatus: true },
+      { id: 2, name: '海淀店', category: '数码', memberNickname: '李娜', memberPhone: '13900139012', legalPerson: '李总', legalIdCard: '110101198102021234', contactName: '李助理', contactPhone: '13900139002', submitTime: '2025-10-02 10:00:00', auditTime: '2025-10-02 14:00:00', auditStatus: 'approved', partnerStatus: true },
+      { id: 3, name: '西城店', category: '服装', memberNickname: '王强', memberPhone: '13900139013', legalPerson: '王总', legalIdCard: '110101198203031234', contactName: '王助理', contactPhone: '13900139003', submitTime: '2025-10-03 11:00:00', auditTime: '2025-10-03 15:00:00', auditStatus: 'approved', partnerStatus: false },
+      { id: 6, name: '石景山店', category: '建材', memberNickname: '杨玲', memberPhone: '13900139016', legalPerson: '杨总', legalIdCard: '110101198506061234', contactName: '杨助理', contactPhone: '13900139006', submitTime: '2025-10-06 14:00:00', auditTime: '2025-10-08 10:00:00', auditStatus: 'rejected', partnerStatus: false },
+      { id: 7, name: '通州店', category: '综合', memberNickname: '高建', memberPhone: '13900139017', legalPerson: '高总', legalIdCard: '110101198607071234', contactName: '高助理', contactPhone: '13900139007', submitTime: '2025-09-15 10:00:00', auditTime: '2025-09-15 14:00:00', auditStatus: 'offline', partnerStatus: false },
+    ];
+
+    const supplierPartnerList = [
+      { id: 1, nickname: '张伟', phone: '13800138001', supplier: '优鲜供应链', region: '北京市-朝阳区', level: 'LP', shares: 100, fee: 10000, subscribeTime: '2024-01-15', status: '正常' },
+      { id: 2, nickname: '李娜', phone: '13800138002', supplier: '绿野食品', region: '北京市-海淀区', level: '1GP', shares: 50, fee: 5000, subscribeTime: '2024-02-20', status: '正常' },
+      { id: 3, nickname: '王强', phone: '13800138003', supplier: '优鲜供应链', region: '北京市-东城区', level: '2GP', shares: 30, fee: 3000, subscribeTime: '2024-03-10', status: '正常' },
+      { id: 4, nickname: '赵丽', phone: '13800138004', supplier: '汇农实业', region: '北京市-西城区', level: 'LP', shares: 80, fee: 8000, subscribeTime: '2024-01-25', status: '正常' },
+      { id: 5, nickname: '孙磊', phone: '13800138005', supplier: '润禾农业', region: '北京市-丰台区', level: '1GP', shares: 60, fee: 6000, subscribeTime: '2024-04-05', status: '正常' },
+      { id: 6, nickname: '周静', phone: '13800138006', supplier: '恒丰粮油', region: '北京市-石景山区', level: '2GP', shares: 25, fee: 2500, subscribeTime: '2024-04-18', status: '正常' },
+      { id: 7, nickname: '吴涛', phone: '13800138007', supplier: '优鲜供应链', region: '北京市-通州区', level: 'LP', shares: 120, fee: 12000, subscribeTime: '2024-01-10', status: '正常' },
+      { id: 8, nickname: '郑云', phone: '13800138008', supplier: '金穗米业', region: '北京市-昌平区', level: '1GP', shares: 45, fee: 4500, subscribeTime: '2024-05-02', status: '正常' },
+      { id: 11, nickname: '林峰', phone: '13800138011', supplier: '优鲜供应链', region: '北京市-朝阳区', level: '1GP', shares: 55, fee: 5500, subscribeTime: '2024-03-22', status: '禁用' },
+      { id: 12, nickname: '黄莉', phone: '13800138012', supplier: '绿野食品', region: '北京市-海淀区', level: '2GP', shares: 35, fee: 3500, subscribeTime: '2024-04-30', status: '正常' },
+    ];
+
+    const storePartnerList = [
+      { id: 1, nickname: '刘洋', phone: '13900139001', store: '朝阳店', region: '北京市-朝阳区', level: 'LP', shares: 80, fee: 8000, subscribeTime: '2024-01-18', status: '正常' },
+      { id: 2, nickname: '杨玲', phone: '13900139002', store: '海淀店', region: '北京市-海淀区', level: '1GP', shares: 40, fee: 4000, subscribeTime: '2024-02-15', status: '正常' },
+      { id: 3, nickname: '朱磊', phone: '13900139003', store: '西城店', region: '北京市-西城区', level: '2GP', shares: 20, fee: 2000, subscribeTime: '2024-03-05', status: '正常' },
+      { id: 4, nickname: '胡霞', phone: '13900139004', store: '东城店', region: '北京市-东城区', level: 'LP', shares: 70, fee: 7000, subscribeTime: '2024-01-28', status: '正常' },
+      { id: 5, nickname: '高建', phone: '13900139005', store: '丰台店', region: '北京市-丰台区', level: '1GP', shares: 50, fee: 5000, subscribeTime: '2024-04-12', status: '正常' },
+      { id: 11, nickname: '戚薇', phone: '13900139011', store: '朝阳店', region: '北京市-朝阳区', level: '1GP', shares: 42, fee: 4200, subscribeTime: '2024-04-20', status: '禁用' },
+      { id: 12, nickname: '谢军', phone: '13900139012', store: '海淀店', region: '北京市-海淀区', level: '2GP', shares: 25, fee: 2500, subscribeTime: '2024-05-18', status: '正常' },
+    ];
+
+    const revenueDetails = [
+      { id: 1, date: '2024-05-01', amount: 1200, type: '分红收益', status: '已发放' },
+      { id: 2, date: '2024-04-01', amount: 980, type: '分红收益', status: '已发放' },
+      { id: 3, date: '2024-03-01', amount: 1050, type: '分红收益', status: '已发放' },
+      { id: 4, date: '2024-02-01', amount: 1100, type: '分红收益', status: '已发放' },
+      { id: 5, date: '2024-01-01', amount: 950, type: '分红收益', status: '已发放' },
+    ];
+
+    const levelConfig = {
+      supplier: [
+        { id: 1, level: 'LP', dividendRatio: '30%', dividendMode: '平分', provincial: '8%', city: '5%', district: '3%', street: '1%', totalShares: 10 },
+        { id: 2, level: '1GP', dividendRatio: '30%', dividendMode: '平分', provincial: '6%', city: '4%', district: '2%', street: '0.5%', totalShares: 10 },
+        { id: 3, level: '2GP', dividendRatio: '40%', dividendMode: '平分', provincial: '4%', city: '2%', district: '1%', street: '0.3%', totalShares: 10 },
+      ],
+      store: [
+        { id: 1, level: 'LP', dividendRatio: '30%', dividendMode: '平分', provincial: '7%', city: '4%', district: '2%', street: '0.8%', totalShares: 10 },
+        { id: 2, level: '1GP', dividendRatio: '30%', dividendMode: '平分', provincial: '5%', city: '3%', district: '1.5%', street: '0.4%', totalShares: 10 },
+        { id: 3, level: '2GP', dividendRatio: '40%', dividendMode: '平分', provincial: '3%', city: '1.5%', district: '0.8%', street: '0.2%', totalShares: 10 },
+      ],
+    };
+
+    // ============ 状态变量 ============
+    let currentPage = 'partner';
+    let currentPartnerTab = 'supplier';
+    let currentRuleTab = 'supplier';
+    let currentOfflineTab = 'pending';
+    let currentOnlineTab = 'pending';
+    let currentSupplierPartnerTab = '红包';
+    let currentRecord = null;
+
+    // ============ 工具函数 ============
+    function getLevelColor(level) {
+      const colors = { LP: '#FF6B00', '1GP': '#1890ff', '2GP': '#52c41a' };
+      return colors[level] || '#333';
+    }
+
+    function getStatusBadge(status) {
+      if (status === '正常' || status === 'approved') {
+        return '<span class="status-dot status-active"></span><span style="color:#52c41a">正常</span>';
+      } else if (status === 'pending') {
+        return '<span class="status-dot status-pending"></span><span style="color:#faad14">待审核</span>';
+      } else if (status === '禁用' || status === 'disabled') {
+        return '<span class="status-dot status-disabled"></span><span style="color:#ff4d4f">禁用</span>';
+      } else if (status === 'rejected') {
+        return '<span style="color:#ff4d4f">未通过</span>';
+      } else if (status === 'offline') {
+        return '<span style="color:#999">已下架</span>';
+      }
+      return status;
+    }
+
+    // ============ 页面切换 ============
+    function switchPage(page) {
+      currentPage = page;
+      // 更新菜单选中状态
+      document.querySelectorAll('.menu-item, .menu-sub-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll(`.menu-sub-item[data-path="${page}"], .menu-item[data-path="${page}"]`).forEach(el => el.classList.add('active'));
+
+      // 更新顶部Tab
+      document.querySelectorAll('.header-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + page)?.classList.add('active');
+
+      // 渲染页面内容
+      renderPage(page);
+    }
+
+    function renderPage(page) {
+      const content = document.getElementById('content');
+      switch (page) {
+        case 'home':
+          content.innerHTML = renderHome();
+          break;
+        case 'mall/offline-merchant':
+          content.innerHTML = renderOfflineMerchant();
+          break;
+        case 'mall/online-store':
+          content.innerHTML = renderOnlineStore();
+          break;
+        case 'partner':
+          content.innerHTML = renderPartner();
+          break;
+        case 'partner/rule-config':
+          content.innerHTML = renderRuleConfig();
+          break;
+        case 'supplier/partner':
+          content.innerHTML = renderSupplierPartner();
+          break;
+      }
+    }
+
+    // ============ 页面渲染函数 ============
+    function renderHome() {
+      return `
+        <div class="welcome">
+          <div class="welcome-icon">🏠</div>
+          <h2>欢迎使用供应链管理后台</h2>
+          <p>这是一个基于 React + Ant Design 的 PC 端原型</p>
+        </div>
+      `;
+    }
+
+    function renderOfflineMerchant() {
+      const filtered = supplierList.filter(item => {
+        if (currentOfflineTab === 'pending') return item.auditStatus === 'pending';
+        if (currentOfflineTab === 'approved') return item.auditStatus === 'approved';
+        if (currentOfflineTab === 'rejected') return item.auditStatus === 'rejected';
+        if (currentOfflineTab === 'offline') return item.auditStatus === 'offline';
+        return true;
+      });
+
+      const pendingCount = supplierList.filter(s => s.auditStatus === 'pending').length;
+      const approvedCount = supplierList.filter(s => s.auditStatus === 'approved').length;
+      const rejectedCount = supplierList.filter(s => s.auditStatus === 'rejected').length;
+      const offlineCount = supplierList.filter(s => s.auditStatus === 'offline').length;
+
+      return `
+        <div class="card">
+          <div class="tab-nav">
+            <div class="tab-item ${currentOfflineTab === 'pending' ? 'active' : ''}" onclick="switchOfflineTab('pending')">待审核 (${pendingCount})</div>
+            <div class="tab-item ${currentOfflineTab === 'approved' ? 'active' : ''}" onclick="switchOfflineTab('approved')">营业中 (${approvedCount})</div>
+            <div class="tab-item ${currentOfflineTab === 'rejected' ? 'active' : ''}" onclick="switchOfflineTab('rejected')">未通过审核 (${rejectedCount})</div>
+            <div class="tab-item ${currentOfflineTab === 'offline' ? 'active' : ''}" onclick="switchOfflineTab('offline')">已下架 (${offlineCount})</div>
+          </div>
+
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="店铺名称">
+            <input type="text" class="search-input" placeholder="联系人手机号">
+            <button class="btn btn-success">搜索</button>
+            <button class="btn" style="border-color:#FF6B00;color:#FF6B00">导出当前页</button>
+            <button class="btn" style="border-color:#FF6B00;color:#FF6B00">导出全部</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>店铺名称</th>
+                  <th>经营类目</th>
+                  <th>会员昵称</th>
+                  <th>会员手机号</th>
+                  <th>法人姓名</th>
+                  <th>法人身份证号</th>
+                  <th>常用联系人</th>
+                  <th>常用联系人手机</th>
+                  <th>提交时间</th>
+                  <th>审核时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(item => `
+                  <tr>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${item.memberNickname}</td>
+                    <td>${item.memberPhone}</td>
+                    <td>${item.legalPerson}</td>
+                    <td>${item.legalIdCard}</td>
+                    <td>${item.contactName}</td>
+                    <td>${item.contactPhone}</td>
+                    <td>${item.submitTime}</td>
+                    <td>${item.auditTime || '-'}</td>
+                    <td>
+                      ${currentOfflineTab === 'pending' ? `
+                        <button class="btn-link" style="color:#07c160" onclick="handleAudit(${item.id}, 'approved')">审核</button>
+                        <button class="btn-link" onclick="handleViewMerchant(${item.id})">查看</button>
+                      ` : ''}
+                      ${currentOfflineTab === 'approved' ? `
+                        ${item.partnerStatus ? `
+                          <button class="btn-link" onclick="handleClosePartner(${item.id})">关闭合伙人</button>
+                        ` : `
+                          <button class="btn-link" style="color:#FF6B00" onclick="handleOpenPartner(${item.id})">开通合伙人</button>
+                        `}
+                      ` : ''}
+                      ${currentOfflineTab === 'rejected' ? `
+                        <button class="btn-link" onclick="handleViewMerchant(${item.id})">查看</button>
+                      ` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button class="page-btn">«</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">»</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderOnlineStore() {
+      const filtered = storeList.filter(item => {
+        if (currentOnlineTab === 'pending') return item.auditStatus === 'pending';
+        if (currentOnlineTab === 'approved') return item.auditStatus === 'approved';
+        if (currentOnlineTab === 'rejected') return item.auditStatus === 'rejected';
+        if (currentOnlineTab === 'offline') return item.auditStatus === 'offline';
+        return true;
+      });
+
+      const pendingCount = storeList.filter(s => s.auditStatus === 'pending').length;
+      const approvedCount = storeList.filter(s => s.auditStatus === 'approved').length;
+      const rejectedCount = storeList.filter(s => s.auditStatus === 'rejected').length;
+      const offlineCount = storeList.filter(s => s.auditStatus === 'offline').length;
+
+      return `
+        <div class="card">
+          <div class="tab-nav">
+            <div class="tab-item ${currentOnlineTab === 'pending' ? 'active' : ''}" onclick="switchOnlineTab('pending')">待审核 (${pendingCount})</div>
+            <div class="tab-item ${currentOnlineTab === 'approved' ? 'active' : ''}" onclick="switchOnlineTab('approved')">营业中 (${approvedCount})</div>
+            <div class="tab-item ${currentOnlineTab === 'rejected' ? 'active' : ''}" onclick="switchOnlineTab('rejected')">未通过审核 (${rejectedCount})</div>
+            <div class="tab-item ${currentOnlineTab === 'offline' ? 'active' : ''}" onclick="switchOnlineTab('offline')">已下架 (${offlineCount})</div>
+          </div>
+
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="店铺名称">
+            <input type="text" class="search-input" placeholder="联系人手机号">
+            <button class="btn btn-success">搜索</button>
+            <button class="btn" style="border-color:#FF6B00;color:#FF6B00">导出当前页</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>店铺名称</th>
+                  <th>经营类目</th>
+                  <th>会员昵称</th>
+                  <th>会员手机号</th>
+                  <th>法人姓名</th>
+                  <th>提交时间</th>
+                  <th>审核时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(item => `
+                  <tr>
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${item.memberNickname}</td>
+                    <td>${item.memberPhone}</td>
+                    <td>${item.legalPerson}</td>
+                    <td>${item.submitTime}</td>
+                    <td>${item.auditTime || '-'}</td>
+                    <td>
+                      ${currentOnlineTab === 'pending' ? `
+                        <button class="btn-link" style="color:#07c160" onclick="handleAuditStore(${item.id}, 'approved')">审核</button>
+                        <button class="btn-link" onclick="handleViewStore(${item.id})">查看</button>
+                      ` : ''}
+                      ${currentOnlineTab === 'approved' && !item.partnerStatus ? `
+                        <button class="btn-link" style="color:#FF6B00" onclick="handleOpenStorePartner(${item.id})">开通合伙人</button>
+                      ` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPartner() {
+      const data = currentPartnerTab === 'supplier' ? supplierPartnerList : storePartnerList;
+      const options = currentPartnerTab === 'supplier' ?
+        [{ id: 1, name: '优鲜供应链' }, { id: 2, name: '绿野食品' }, { id: 88, name: '鲜达生鲜' }] :
+        [{ id: 1, name: '朝阳店' }, { id: 2, name: '海淀店' }, { id: 3, name: '西城店' }];
+
+      const columns = currentPartnerTab === 'supplier' ? [
+        { title: 'ID', dataIndex: 'id' },
+        { title: '昵称', dataIndex: 'nickname' },
+        { title: '手机号', dataIndex: 'phone' },
+        { title: '归属供应商', dataIndex: 'supplier' },
+        { title: '归属地区', dataIndex: 'region' },
+      ] : [
+        { title: 'ID', dataIndex: 'id' },
+        { title: '昵称', dataIndex: 'nickname' },
+        { title: '手机号', dataIndex: 'phone' },
+        { title: '归属门店', dataIndex: 'store' },
+        { title: '归属地区', dataIndex: 'region' },
+      ];
+
+      return `
+        <div class="card">
+          <div class="tab-nav">
+            <div class="tab-item ${currentPartnerTab === 'supplier' ? 'active' : ''}" onclick="switchPartnerTab('supplier')">供应商合伙人 (${supplierPartnerList.length})</div>
+            <div class="tab-item ${currentPartnerTab === 'store' ? 'active' : ''}" onclick="switchPartnerTab('store')">门店合伙人 (${storePartnerList.length})</div>
+          </div>
+
+          <div class="search-bar">
+            <select class="form-select" style="width:160px">
+              <option value="">${currentPartnerTab === 'supplier' ? '请选择供应商' : '请选择门店'}</option>
+              ${options.map(o => `<option value="${o.name}">${o.name}</option>`).join('')}
+            </select>
+            <select class="form-select" style="width:120px">
+              <option value="">状态</option>
+              <option value="正常">正常</option>
+              <option value="禁用">禁用</option>
+            </select>
+            <button class="btn">筛选</button>
+            <button class="btn">重置</button>
+            <button class="btn">导出</button>
+          </div>
+
+          <div class="mb-12">
+            <button class="btn btn-primary" onclick="openAddPartner()">添加合伙人</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  ${columns.map(c => `<th>${c.title}</th>`).join('')}
+                  <th>代理级别</th>
+                  <th>认购份数</th>
+                  <th>认购费(元)</th>
+                  <th>认购时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.map(item => `
+                  <tr>
+                    ${columns.map(c => `<td>${item[c.dataIndex]}</td>`).join('')}
+                    <td style="color:${getLevelColor(item.level)};font-weight:500">${item.level}</td>
+                    <td>${item.shares}</td>
+                    <td>${item.fee}</td>
+                    <td>${item.subscribeTime}</td>
+                    <td>
+                      <button class="btn-link" onclick="openEditPartner(${item.id})">编辑</button>
+                      <button class="btn-link-${item.status === '正常' ? 'danger' : ''}" onclick="togglePartnerStatus(${item.id})">${item.status === '正常' ? '禁用' : '启用'}</button>
+                      <button class="btn-link" onclick="openRevenueDetail(${item.id})">收益明细</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button class="page-btn">«</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">»</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRuleConfig() {
+      const currentData = currentRuleTab === 'supplier' ? levelConfig.supplier : levelConfig.store;
+      const levelColors = { LP: 'orange', '1GP': 'blue', '2GP': 'green' };
+
+      return `
+        <div class="card">
+          <div class="btn-group">
+            <div class="btn-group-item ${currentRuleTab === 'supplier' ? 'active' : ''}" onclick="switchRuleTab('supplier')">供应商合伙人配置</div>
+            <div class="btn-group-item ${currentRuleTab === 'store' ? 'active' : ''}" onclick="switchRuleTab('store')">门店合伙人配置</div>
+          </div>
+
+          <div style="background:#fafafa;border-radius:8px;padding:24px;min-height:400px">
+            <div class="rule-cards">
+              ${currentData.map(record => `
+                <div class="rule-card">
+                  <div class="rule-card-header">
+                    <span class="rule-card-title ${levelColors[record.level]}">${record.level}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">分红模式</span>
+                    <span class="rule-row-value">${record.dividendMode}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">分红比例</span>
+                    <span class="rule-row-value orange">${record.dividendRatio || '-'}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">省级分红</span>
+                    <span class="rule-row-value">${record.provincial}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">市级分红</span>
+                    <span class="rule-row-value">${record.city}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">区级分红</span>
+                    <span class="rule-row-value">${record.district}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">街道分红</span>
+                    <span class="rule-row-value">${record.street}</span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="rule-row-label">认购份额</span>
+                    <span class="rule-row-value blue">${record.totalShares}</span>
+                  </div>
+                  <div style="text-align:center;margin-top:16px">
+                    <button class="btn btn-primary" onclick="openEditRule('${record.level}')">编辑配置</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSupplierPartner() {
+      const columns = [
+        { title: 'ID', dataIndex: 'id' },
+        { title: '昵称', dataIndex: 'nickname' },
+        { title: '手机号', dataIndex: 'phone' },
+        { title: '归属地区', dataIndex: 'region' },
+        { title: '代理级别', dataIndex: 'level' },
+        { title: '认购份数', dataIndex: 'shares' },
+        { title: '认购费(元)', dataIndex: 'fee' },
+        { title: '认购时间', dataIndex: 'subscribeTime' },
+      ];
+
+      return `
+        <div class="card">
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="昵称">
+            <input type="text" class="search-input" placeholder="手机号">
+            <select class="form-select" style="width:120px">
+              <option value="">状态</option>
+              <option value="正常">正常</option>
+              <option value="禁用">禁用</option>
+            </select>
+            <button class="btn">筛选</button>
+            <button class="btn">重置</button>
+            <button class="btn">导出</button>
+          </div>
+
+          <div class="mb-12">
+            <button class="btn btn-primary" onclick="openAddSupplierPartner()">添加合伙人</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  ${columns.map(c => `<th>${c.title}</th>`).join('')}
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${supplierPartnerList.slice(0, 8).map(item => `
+                  <tr>
+                    ${columns.map(c => `<td>${c.dataIndex === 'level' ? `<span style="color:${getLevelColor(item.level)};font-weight:bold">${item.level}</span>` : item[c.dataIndex]}</td>`).join('')}
+                    <td>
+                      <button class="btn-link" onclick="openEditSupplierPartner(${item.id})">编辑</button>
+                      <button class="btn-link-${item.status === '正常' ? 'danger' : ''}" onclick="toggleSupplierPartnerStatus(${item.id})">${item.status === '正常' ? '禁用' : '启用'}</button>
+                      <button class="btn-link" onclick="openSupplierRevenue(${item.id})">收益明细</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 收益明细弹窗 -->
+        <div class="modal-overlay" id="modal-supplier-revenue">
+          <div class="modal" style="max-width:900px;">
+            <div class="modal-header">
+              <div class="modal-title">收益明细 - 张伟</div>
+              <span class="modal-close" onclick="closeModal('modal-supplier-revenue')">×</span>
+            </div>
+            <div class="modal-body">
+              <div class="search-bar mb-12">
+                <input type="text" class="search-input" placeholder="开始时间" style="width:150px">
+                <span>-</span>
+                <input type="text" class="search-input" placeholder="结束时间" style="width:150px">
+                <button class="btn btn-primary">查询</button>
+              </div>
+              <div class="tab-nav">
+                <div class="tab-item ${currentSupplierPartnerTab === '红包' ? 'active' : ''}" onclick="switchSupplierRevenueTab('红包')">红包</div>
+                <div class="tab-item ${currentSupplierPartnerTab === '冻结红包' ? 'active' : ''}" onclick="switchSupplierRevenueTab('冻结红包')">冻结红包</div>
+                <div class="tab-item ${currentSupplierPartnerTab === '余额' ? 'active' : ''}" onclick="switchSupplierRevenueTab('余额')">余额</div>
+                <div class="tab-item ${currentSupplierPartnerTab === '冻结余额' ? 'active' : ''}" onclick="switchSupplierRevenueTab('冻结余额')">冻结余额</div>
+              </div>
+              <table class="inner-table">
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>时间</th>
+                    <th>用户昵称</th>
+                    <th>用户账号</th>
+                    <th>类型</th>
+                    <th>订单编号</th>
+                    <th>交易前</th>
+                    <th>交易金额</th>
+                    <th>交易后</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${currentSupplierPartnerTab === '红包' ? `
+                    <tr><td>1</td><td>2024-05-01 10:30:00</td><td>张三</td><td>zhangsan</td><td>红包</td><td>ORD20240501001</td><td>500</td><td style="color:#52c41a">+200</td><td>700</td></tr>
+                    <tr><td>2</td><td>2024-05-03 09:15:00</td><td>王五</td><td>wangwu</td><td>红包</td><td>ORD20240503003</td><td>300</td><td style="color:#52c41a">+150</td><td>450</td></tr>
+                  ` : `
+                    <tr><td>1</td><td>2024-05-01 10:30:00</td><td>张三</td><td>zhangsan</td><td>冻结红包</td><td>ORD20240501001</td><td>1000</td><td style="color:#ff4d4f">-200</td><td>800</td></tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ============ 交互处理函数 ============
+    function switchPartnerTab(tab) {
+      currentPartnerTab = tab;
+      renderPage('partner');
+    }
+
+    function switchRuleTab(tab) {
+      currentRuleTab = tab;
+      renderPage('partner/rule-config');
+    }
+
+    function switchOfflineTab(tab) {
+      currentOfflineTab = tab;
+      renderPage('mall/offline-merchant');
+    }
+
+    function switchOnlineTab(tab) {
+      currentOnlineTab = tab;
+      renderPage('mall/online-store');
+    }
+
+    function switchSupplierRevenueTab(tab) {
+      currentSupplierPartnerTab = tab;
+      renderPage('supplier/partner');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('show');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    function openAddPartner() {
+      document.getElementById('modal-add-title').textContent = '添加合伙人';
+      document.getElementById('label-supplier-store').textContent = currentPartnerTab === 'supplier' ? '归属供应商' : '归属门店';
+      openModal('modal-add-partner');
+    }
+
+    function openEditPartner(id) {
+      const data = currentPartnerTab === 'supplier' ? supplierPartnerList : storePartnerList;
+      const item = data.find(p => p.id === id);
+      if (item) {
+        currentRecord = item;
+        document.getElementById('edit-nickname').value = item.nickname;
+        document.getElementById('edit-phone').value = item.phone;
+        document.getElementById('edit-level').value = item.level;
+        document.getElementById('edit-region').value = item.region;
+        document.getElementById('edit-shares').value = item.shares;
+        document.getElementById('edit-fee').value = item.fee;
+        openModal('modal-edit-partner');
+      }
+    }
+
+    function openRevenueDetail(id) {
+      const data = currentPartnerTab === 'supplier' ? supplierPartnerList : storePartnerList;
+      const item = data.find(p => p.id === id);
+      if (item) {
+        document.getElementById('revenue-partner-info').textContent = `合伙人：${item.nickname} - ${item.phone}`;
+        document.getElementById('revenue-table-body').innerHTML = revenueDetails.map(r => `
+          <tr>
+            <td>${r.date}</td>
+            <td>${r.amount}</td>
+            <td>${r.type}</td>
+            <td>${r.status}</td>
+          </tr>
+        `).join('');
+        openModal('modal-revenue');
+      }
+    }
+
+    function submitAddPartner() {
+      alert('添加成功');
+      closeModal('modal-add-partner');
+    }
+
+    function submitEditPartner() {
+      alert('编辑成功');
+      closeModal('modal-edit-partner');
+    }
+
+    function togglePartnerStatus(id) {
+      const data = currentPartnerTab === 'supplier' ? supplierPartnerList : storePartnerList;
+      const item = data.find(p => p.id === id);
+      if (item) {
+        alert(`${item.status === '正常' ? '禁用' : '启用'}成功`);
+        renderPage('partner');
+      }
+    }
+
+    function handleOpenPartner(id) {
+      const item = supplierList.find(s => s.id === id);
+      if (item) {
+        currentRecord = item;
+        document.getElementById('open-partner-name').textContent = `确定要为「${item.name}」开通合伙人功能吗？`;
+        openModal('modal-open-partner');
+      }
+    }
+
+    function confirmOpenPartner() {
+      alert('开通成功');
+      closeModal('modal-open-partner');
+      renderPage('mall/offline-merchant');
+    }
+
+    function handleAudit(id, status) {
+      alert('审核通过');
+      renderPage('mall/offline-merchant');
+    }
+
+    function handleViewMerchant(id) {
+      alert('查看商家信息');
+    }
+
+    function handleClosePartner(id) {
+      if (confirm('确定要关闭合伙人功能吗？')) {
+        alert('关闭成功');
+        renderPage('mall/offline-merchant');
+      }
+    }
+
+    function handleAuditStore(id, status) {
+      alert('审核通过');
+      renderPage('mall/online-store');
+    }
+
+    function handleViewStore(id) {
+      alert('查看门店信息');
+    }
+
+    function handleOpenStorePartner(id) {
+      const item = storeList.find(s => s.id === id);
+      if (item) {
+        currentRecord = item;
+        document.getElementById('open-partner-name').textContent = `确定要为「${item.name}」开通合伙人功能吗？`;
+        openModal('modal-open-partner');
+      }
+    }
+
+    function openEditRule(level) {
+      document.getElementById('rule-modal-title').textContent = `编辑${level}等级配置`;
+      document.getElementById('rule-level').value = level;
+      openModal('modal-edit-rule');
+    }
+
+    function submitEditRule() {
+      alert('编辑成功');
+      closeModal('modal-edit-rule');
+    }
+
+    function openAddSupplierPartner() {
+      document.getElementById('modal-add-title').textContent = '添加合伙人';
+      document.getElementById('label-supplier-store').textContent = '归属供应商';
+      openModal('modal-add-partner');
+    }
+
+    function openEditSupplierPartner(id) {
+      const item = supplierPartnerList.find(p => p.id === id);
+      if (item) {
+        currentRecord = item;
+        document.getElementById('edit-nickname').value = item.nickname;
+        document.getElementById('edit-phone').value = item.phone;
+        document.getElementById('edit-level').value = item.level;
+        document.getElementById('edit-region').value = item.region;
+        document.getElementById('edit-shares').value = item.shares;
+        document.getElementById('edit-fee').value = item.fee;
+        openModal('modal-edit-partner');
+      }
+    }
+
+    function toggleSupplierPartnerStatus(id) {
+      const item = supplierPartnerList.find(p => p.id === id);
+      if (item) {
+        alert(`${item.status === '正常' ? '禁用' : '启用'}成功`);
+        renderPage('supplier/partner');
+      }
+    }
+
+    function openSupplierRevenue(id) {
+      openModal('modal-supplier-revenue');
+    }
+
+    // 点击遮罩关闭弹窗
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('show');
+        }
+      });
+    });
+
+    // 初始化渲染
+    renderPage('partner');
+  </script>
+</body>
+</html>

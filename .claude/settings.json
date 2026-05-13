@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5175/src/pages/mall/offline-merchant/index.jsx)",
+      "Edit(.claude/**)",
+      "Bash(rm *)",
+      "Bash(mkdir *)",
+      "Bash(rmdir *)",
+      "Bash(cd *)",
+      "Bash(test *)",
+      "Bash(if exist *)",
+      "Write(.claude/**)",
+      "Write(SmartStar_PM/workspace/**)"
+    ],
+    "additionalDirectories": []
+  }
+}

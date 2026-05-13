@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星码特管理后台 - 分销业绩统计</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --primary: #FF6B00;
+  --primary-light: rgba(255,107,0,0.08);
+  --primary-hover: #e55e00;
+  --success: #07c160;
+  --warning: #FF6B00;
+  --info: #1989fa;
+  --error: #f5222d;
+  --bg: #f0f2f5;
+  --card-bg: #fff;
+  --border: #f0f0f0;
+  --text: #323233;
+  --text-secondary: #969799;
+  --text-placeholder: #bfbfbf;
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-modal: 0 8px 32px rgba(0,0,0,0.16);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --sider-width: 220px;
+  --header-height: 48px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  min-width: 1200px;
+}
+
+/* Layout */
+.layout { display: flex; min-height: 100vh; }
+
+/* Header */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+  background: #001529; color: #fff; display: flex; align-items: center;
+  padding: 0 24px; z-index: 100; justify-content: space-between;
+}
+.header-logo { font-size: 16px; font-weight: 600; letter-spacing: 1px; }
+.header-right { display: flex; align-items: center; gap: 16px; font-size: 13px; color: rgba(255,255,255,0.75); }
+.header-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; }
+
+/* Sider */
+.sider {
+  position: fixed; top: var(--header-height); left: 0; bottom: 0;
+  width: var(--sider-width); background: #fff; border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 99; padding: 8px 0;
+}
+.sider-title { padding: 12px 20px; font-size: 12px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; }
+.menu-group { margin-bottom: 4px; }
+.menu-item {
+  display: flex; align-items: center; padding: 10px 20px; cursor: pointer;
+  color: var(--text); font-size: 14px; transition: all 0.2s; gap: 10px;
+  border-left: 3px solid transparent; position: relative;
+}
+.menu-item:hover { background: #fafafa; }
+.menu-item.active { color: var(--primary); background: var(--primary-light); border-left-color: var(--primary); font-weight: 500; }
+.menu-item .icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.menu-item .arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; color: var(--text-placeholder); }
+.menu-item .arrow.open { transform: rotate(90deg); }
+.menu-sub { overflow: hidden; transition: max-height 0.3s ease; }
+.menu-sub.collapsed { max-height: 0; }
+.menu-sub.expanded { max-height: 200px; }
+.menu-sub .menu-item { padding-left: 48px; font-size: 13px; }
+
+/* Content */
+.content { margin-left: var(--sider-width); margin-top: var(--header-height); flex: 1; padding: 24px; }
+.page-header { margin-bottom: 16px; }
+.page-title { font-size: 18px; font-weight: 600; color: var(--text); }
+.breadcrumb { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.breadcrumb span { color: var(--text); }
+
+/* Section header */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 16px; font-weight: 500; color: var(--text); }
+
+/* Cards */
+.stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 16px; }
+.stat-card {
+  background: #fff; border-radius: var(--radius); padding: 20px 24px;
+  box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 8px;
+  transition: box-shadow 0.2s;
+}
+.stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.stat-card-label { font-size: 13px; color: var(--text-secondary); }
+.stat-card-value { font-size: 28px; font-weight: 700; color: var(--text); }
+.stat-card-trend { font-size: 12px; color: var(--success); }
+.stat-card-trend.down { color: var(--error); }
+.stat-card:nth-child(1) .stat-card-value { color: var(--primary); }
+
+/* Chart */
+.chart-card {
+  background: #fff; border-radius: var(--radius); padding: 20px 24px;
+  box-shadow: var(--shadow-card); margin-bottom: 16px;
+}
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.chart-title { font-size: 16px; font-weight: 500; }
+.chart-controls { display: flex; align-items: center; gap: 12px; }
+.chart-toggles { display: flex; gap: 2px; background: #f5f5f5; border-radius: var(--radius-sm); padding: 2px; }
+.chart-toggle {
+  padding: 6px 16px; font-size: 13px; cursor: pointer; border: none; background: transparent;
+  border-radius: var(--radius-sm); color: var(--text-secondary); transition: all 0.2s;
+}
+.chart-toggle.active { background: #fff; color: var(--primary); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.chart-date { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.chart-date input {
+  padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: var(--radius-sm);
+  font-size: 12px; outline: none; width: 110px;
+}
+.chart-date input:focus { border-color: var(--primary); }
+.chart-legend { display: flex; gap: 24px; margin-bottom: 12px; font-size: 13px; }
+.chart-legend-item { display: flex; align-items: center; gap: 6px; }
+.chart-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+.chart-legend-dot.line { width: 20px; height: 2px; border-radius: 1px; }
+.chart-container { position: relative; width: 100%; height: 300px; }
+.chart-container canvas { width: 100%; height: 100%; }
+
+/* Content card */
+.content-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-card); }
+.content-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid var(--border);
+}
+.content-card-title { font-size: 15px; font-weight: 500; }
+.content-body { padding: 16px 24px 24px; }
+
+/* Toolbar */
+.toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.toolbar-select {
+  padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text); background: #fff; cursor: pointer; outline: none;
+}
+.toolbar-select:focus { border-color: var(--primary); }
+.toolbar-input {
+  padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: var(--radius-sm);
+  font-size: 13px; width: 220px; outline: none;
+}
+.toolbar-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(255,107,0,0.1); }
+.toolbar-input::placeholder { color: var(--text-placeholder); }
+
+/* Buttons */
+.btn { padding: 6px 16px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: var(--text); transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+.btn-link { background: transparent; border: none; color: var(--primary); padding: 4px 8px; }
+.btn-link:hover { opacity: 0.8; }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table th { background: #fafafa; font-weight: 500; color: var(--text-secondary); font-size: 12px; position: sticky; top: 0; user-select: none; }
+.table tr:hover td { background: #fafafa; }
+.table th.sortable { cursor: pointer; transition: color 0.2s; }
+.table th.sortable:hover { color: var(--primary); }
+.table th.sorted { color: var(--primary); }
+.sort-icon { display: inline-block; margin-left: 4px; font-size: 10px; }
+.fan-info { display: flex; align-items: center; gap: 10px; }
+.fan-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  color: var(--primary); flex-shrink: 0; overflow: hidden;
+}
+.fan-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.fan-name { font-weight: 500; }
+.fan-phone { font-size: 12px; color: var(--text-secondary); }
+
+/* Pagination */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px; font-size: 13px;
+}
+.pagination-left { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
+.pagination-right { display: flex; align-items: center; gap: 4px; }
+.page-btn {
+  min-width: 32px; height: 32px; display: flex; align-items: center;
+  justify-content: center; border: 1px solid #d9d9d9; border-radius: var(--radius-sm);
+  background: #fff; cursor: pointer; color: var(--text); transition: all 0.2s;
+}
+.page-btn:hover { border-color: var(--primary); color: var(--primary); }
+.page-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.page-size-select {
+  padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: var(--radius-sm);
+  font-size: 13px; outline: none; cursor: pointer;
+}
+.page-info { color: var(--text-secondary); margin: 0 8px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); display: none; align-items: center;
+  justify-content: center; z-index: 1000; animation: fadeIn 0.2s;
+}
+.modal-overlay.show { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: #fff; border-radius: var(--radius); width: 720px;
+  max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-modal);
+  animation: slideUp 0.3s cubic-bezier(0,0,0.2,1);
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 16px; font-weight: 600; }
+.modal-close {
+  width: 32px; height: 32px; display: flex; align-items: center;
+  justify-content: center; border: none; background: transparent;
+  cursor: pointer; font-size: 18px; color: var(--text-secondary);
+  border-radius: var(--radius-sm); transition: all 0.2s;
+}
+.modal-close:hover { background: #f5f5f5; color: var(--text); }
+.modal-body { padding: 24px; }
+
+/* Detail in modal */
+.detail-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.detail-info-item { display: flex; flex-direction: column; gap: 4px; }
+.detail-info-label { font-size: 12px; color: var(--text-secondary); }
+.detail-info-value { font-size: 15px; color: var(--text); font-weight: 500; }
+.detail-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.detail-card {
+  background: #fafafa; border-radius: var(--radius-sm); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.detail-card-label { font-size: 12px; color: var(--text-secondary); }
+.detail-card-value { font-size: 20px; font-weight: 600; color: var(--text); }
+.detail-card-value.highlight { color: var(--primary); }
+.detail-section { margin-bottom: 24px; }
+.detail-section-title { font-size: 15px; font-weight: 500; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid var(--primary); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.78); color: #fff; padding: 10px 24px;
+  border-radius: var(--radius-sm); font-size: 13px; z-index: 9999;
+  animation: toastIn 0.3s ease; pointer-events: none;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.sider-version { padding: 8px 20px; font-size: 11px; color: var(--text-placeholder); border-top: 1px solid var(--border); margin-top: 8px; }
+
+/* Row clickable */
+.table tr[data-fan-id] { cursor: pointer; }
+.table tr[data-fan-id]:hover td { background: #fff7f0; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">星码特管理后台</div>
+  <div class="header-right">
+    <span>🔔</span>
+    <span>供应商：华南科技电子有限公司</span>
+    <div class="header-avatar">华</div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sider -->
+  <div class="sider">
+    <div class="sider-title">导航菜单</div>
+    <div class="menu-group">
+      <div class="menu-item"><span class="icon">🏠</span>首页</div>
+      <div class="menu-item">
+        <span class="icon">🛒</span>商城管理<span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub collapsed">
+        <div class="menu-item">线下商家管理</div>
+        <div class="menu-item">线上店铺列表</div>
+      </div>
+      <div class="menu-item">
+        <span class="icon">👥</span>会员管理<span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub collapsed">
+        <div class="menu-item">合伙人管理</div>
+        <div class="menu-item">合伙人规则配置</div>
+      </div>
+      <div class="menu-item">
+        <span class="icon">📦</span>供应端<span class="arrow open">▶</span>
+      </div>
+      <div class="menu-sub expanded">
+        <div class="menu-item">合伙人管理</div>
+        <div class="menu-item active">分销业绩统计</div>
+      </div>
+    </div>
+    <div class="sider-version">v1.0.0</div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="page-header">
+      <div class="breadcrumb">供应端 / <span>分销业绩统计</span></div>
+      <div class="page-title">分销业绩统计</div>
+    </div>
+
+    <!-- Stat Cards (5 cards per spec) -->
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-card-label">粉丝总业绩（元）</div>
+        <div class="stat-card-value">89,320.00</div>
+        <div class="stat-card-trend">▲ 较上月 +15.2%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">个人总业绩（元）</div>
+        <div class="stat-card-value">12,580.00</div>
+        <div class="stat-card-trend">▲ 较上月 +8.5%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">粉丝总数（人）</div>
+        <div class="stat-card-value">156</div>
+        <div class="stat-card-trend">▲ 较上月 +23</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">种子粉丝数（人）</div>
+        <div class="stat-card-value">12</div>
+        <div class="stat-card-trend">▲ 较上月 +2</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">新增粉丝数（人）</div>
+        <div class="stat-card-value">23</div>
+        <div class="stat-card-trend down">▼ 较上月 -5</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">业绩趋势</div>
+        <div class="chart-controls">
+          <div class="chart-date">
+            <input type="date" id="chartDateStart" value="2026-01-01" title="开始日期">
+            <span>至</span>
+            <input type="date" id="chartDateEnd" value="2026-05-12" title="结束日期">
+          </div>
+          <div class="chart-toggles" id="chartToggles">
+            <button class="chart-toggle" data-gran="day">按日</button>
+            <button class="chart-toggle" data-gran="week">按周</button>
+            <button class="chart-toggle active" data-gran="month">按月</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:rgba(255,107,0,0.3)"></div>粉丝总业绩</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot line" style="background:var(--primary)"></div>个人总业绩</div>
+      </div>
+      <div class="chart-container"><canvas id="chartCanvas"></canvas></div>
+    </div>
+
+    <!-- 我的种子粉丝 -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <div class="content-card-title">我的种子粉丝</div>
+        <span style="font-size:13px;color:var(--text-secondary)">共 <b id="totalCount">0</b> 条记录</span>
+      </div>
+      <div class="content-body">
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <select class="toolbar-select" id="timeFilter">
+            <option value="today">今日</option>
+            <option value="yesterday">昨日</option>
+            <option value="7days">近7天</option>
+            <option value="30days" selected>近30天</option>
+            <option value="custom">自定义</option>
+          </select>
+          <input type="text" class="toolbar-input" placeholder="搜索用户ID或手机号" id="searchInput">
+          <select class="toolbar-select" id="sortField">
+            <option value="registerTime">按注册时间排序</option>
+            <option value="seedFanCount">按种子粉丝数排序</option>
+            <option value="fanTotalPerformance">按粉丝总业绩排序</option>
+            <option value="personalTotalPerformance">按个人总业绩排序</option>
+          </select>
+          <select class="toolbar-select" id="sortOrder">
+            <option value="desc">降序</option>
+            <option value="asc">升序</option>
+          </select>
+          <button class="btn btn-primary" id="exportBtn">📥 导出数据</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>用户ID</th>
+                <th style="min-width:180px">粉丝信息</th>
+                <th>种子粉丝数</th>
+                <th>粉丝总业绩（元）</th>
+                <th>个人总业绩（元）</th>
+                <th>红包券</th>
+                <th>消费积分</th>
+                <th>消费券（元）</th>
+                <th>注册时间</th>
+              </tr>
+            </thead>
+            <tbody id="fanTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <div class="pagination-left">
+            每页
+            <select class="page-size-select" id="pageSizeSelect">
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            条
+            <span class="page-info" id="pageRangeInfo">第 1-10 条</span>
+          </div>
+          <div class="pagination-right" id="pageNav">
+            <button class="page-btn" id="btnFirst" disabled title="首页">«</button>
+            <button class="page-btn" id="btnPrev" disabled title="上一页">‹</button>
+            <span id="pageNumbers" style="display:flex;gap:4px"></span>
+            <button class="page-btn" id="btnNext" disabled title="下一页">›</button>
+            <button class="page-btn" id="btnLast" disabled title="末页">»</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fan Detail Modal -->
+<div class="modal-overlay" id="fanModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">粉丝详情</div>
+      <button class="modal-close" onclick="closeFanModal()">✕</button>
+    </div>
+    <div class="modal-body" id="fanModalBody"></div>
+  </div>
+</div>
+
+<script>
+// ===================== MOCK DATA =====================
+const seedFanData = [
+  { userId: 'U10001', name: '刘太太', phone: '135******35', avatar: '刘', gender: '女',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 58600.00, personalTotalPerformance: 28650.00,
+    redPacket: 12, consumePoints: 5800, consumeCoupon: 320.00, registerTime: '2026-01-15',
+    totalConsume: 28650.00, totalCommission: 2865.00, teamPerformance: 58600.00, fanCount: 5, seedFanCount: 3 },
+  { userId: 'U10002', name: '张伟', phone: '138******21', avatar: '张', gender: '男',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 36200.00, personalTotalPerformance: 18320.00,
+    redPacket: 8, consumePoints: 3800, consumeCoupon: 180.00, registerTime: '2026-02-08',
+    totalConsume: 18320.00, totalCommission: 1832.00, teamPerformance: 36200.00, fanCount: 3, seedFanCount: 1 },
+  { userId: 'U10003', name: '李明', phone: '159******78', avatar: '李', gender: '男',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 19800.00, personalTotalPerformance: 12500.00,
+    redPacket: 5, consumePoints: 2500, consumeCoupon: 120.00, registerTime: '2026-03-22',
+    totalConsume: 12500.00, totalCommission: 1250.00, teamPerformance: 19800.00, fanCount: 2, seedFanCount: 1 },
+  { userId: 'U10004', name: '王芳', phone: '186******09', avatar: '王', gender: '女',
+    seedFan: '刘太太', fanTotalPerformance: 15200.00, personalTotalPerformance: 9600.00,
+    redPacket: 4, consumePoints: 1800, consumeCoupon: 90.00, registerTime: '2026-02-20',
+    totalConsume: 9600.00, totalCommission: 960.00, teamPerformance: 15200.00, fanCount: 2, seedFanCount: 0 },
+  { userId: 'U10005', name: '陈丽', phone: '177******56', avatar: '陈', gender: '女',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 22100.00, personalTotalPerformance: 22100.00,
+    redPacket: 10, consumePoints: 4200, consumeCoupon: 250.00, registerTime: '2025-12-10',
+    totalConsume: 22100.00, totalCommission: 2210.00, teamPerformance: 22100.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10006', name: '赵强', phone: '133******42', avatar: '赵', gender: '男',
+    seedFan: '刘太太', fanTotalPerformance: 7800.00, personalTotalPerformance: 7800.00,
+    redPacket: 3, consumePoints: 1200, consumeCoupon: 60.00, registerTime: '2026-03-05',
+    totalConsume: 7800.00, totalCommission: 780.00, teamPerformance: 7800.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10007', name: '周晓', phone: '150******63', avatar: '周', gender: '女',
+    seedFan: '张伟', fanTotalPerformance: 16800.00, personalTotalPerformance: 11200.00,
+    redPacket: 6, consumePoints: 2100, consumeCoupon: 110.00, registerTime: '2026-03-18',
+    totalConsume: 11200.00, totalCommission: 1120.00, teamPerformance: 16800.00, fanCount: 1, seedFanCount: 1 },
+  { userId: 'U10008', name: '孙磊', phone: '189******27', avatar: '孙', gender: '男',
+    seedFan: '王芳', fanTotalPerformance: 5600.00, personalTotalPerformance: 5600.00,
+    redPacket: 2, consumePoints: 900, consumeCoupon: 40.00, registerTime: '2026-04-01',
+    totalConsume: 5600.00, totalCommission: 560.00, teamPerformance: 5600.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10009', name: '吴丽', phone: '136******81', avatar: '吴', gender: '女',
+    seedFan: '王芳', fanTotalPerformance: 4200.00, personalTotalPerformance: 4200.00,
+    redPacket: 1, consumePoints: 700, consumeCoupon: 30.00, registerTime: '2026-04-10',
+    totalConsume: 4200.00, totalCommission: 420.00, teamPerformance: 4200.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10010', name: '郑涛', phone: '157******94', avatar: '郑', gender: '男',
+    seedFan: '周晓', fanTotalPerformance: 5600.00, personalTotalPerformance: 5600.00,
+    redPacket: 2, consumePoints: 800, consumeCoupon: 50.00, registerTime: '2026-04-15',
+    totalConsume: 5600.00, totalCommission: 560.00, teamPerformance: 5600.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10011', name: '黄霞', phone: '182******30', avatar: '黄', gender: '女',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 15600.00, personalTotalPerformance: 15600.00,
+    redPacket: 7, consumePoints: 3000, consumeCoupon: 160.00, registerTime: '2026-02-28',
+    totalConsume: 15600.00, totalCommission: 1560.00, teamPerformance: 15600.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10012', name: '马超', phone: '139******15', avatar: '马', gender: '男',
+    seedFan: '李明', fanTotalPerformance: 7300.00, personalTotalPerformance: 7300.00,
+    redPacket: 3, consumePoints: 1100, consumeCoupon: 55.00, registerTime: '2026-04-22',
+    totalConsume: 7300.00, totalCommission: 730.00, teamPerformance: 7300.00, fanCount: 0, seedFanCount: 0 },
+  { userId: 'U10013', name: '林小红', phone: '185******67', avatar: '林', gender: '女',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 33500.00, personalTotalPerformance: 19200.00,
+    redPacket: 9, consumePoints: 3600, consumeCoupon: 200.00, registerTime: '2026-01-28',
+    totalConsume: 19200.00, totalCommission: 1920.00, teamPerformance: 33500.00, fanCount: 4, seedFanCount: 2 },
+  { userId: 'U10014', name: '何大军', phone: '152******88', avatar: '何', gender: '男',
+    seedFan: '林小红', fanTotalPerformance: 12800.00, personalTotalPerformance: 8200.00,
+    redPacket: 4, consumePoints: 1500, consumeCoupon: 80.00, registerTime: '2026-03-08',
+    totalConsume: 8200.00, totalCommission: 820.00, teamPerformance: 12800.00, fanCount: 1, seedFanCount: 0 },
+  { userId: 'U10015', name: '许芳芳', phone: '176******33', avatar: '许', gender: '女',
+    seedFan: '华南科技电子有限公司', fanTotalPerformance: 9800.00, personalTotalPerformance: 9800.00,
+    redPacket: 2, consumePoints: 800, consumeCoupon: 45.00, registerTime: '2026-05-02',
+    totalConsume: 9800.00, totalCommission: 980.00, teamPerformance: 9800.00, fanCount: 0, seedFanCount: 0 },
+];
+
+// ===================== STATE =====================
+let currentPage = 1;
+let pageSize = 10;
+let currentSortField = 'registerTime';
+let currentSortOrder = 'desc';
+
+// ===================== RENDER TABLE =====================
+function getFilteredAndSortedData() {
+  const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+  const timeFilter = document.getElementById('timeFilter').value;
+
+  let filtered = seedFanData.filter(f => {
+    const matchSearch = !searchVal
+      || f.userId.toLowerCase().includes(searchVal)
+      || f.phone.includes(searchVal);
+    return matchSearch;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    let valA = a[currentSortField];
+    let valB = b[currentSortField];
+    if (typeof valA === 'string') valA = valA.toLowerCase();
+    if (typeof valB === 'string') valB = valB.toLowerCase();
+    if (currentSortOrder === 'asc') return valA > valB ? 1 : valA < valB ? -1 : 0;
+    return valA < valB ? 1 : valA > valB ? -1 : 0;
+  });
+
+  return filtered;
+}
+
+function renderFanTable() {
+  const filtered = getFilteredAndSortedData();
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * pageSize;
+  const end = Math.min(start + pageSize, totalItems);
+  const pageData = filtered.slice(start, end);
+
+  // Update count
+  document.getElementById('totalCount').textContent = totalItems;
+  document.getElementById('pageRangeInfo').textContent = totalItems > 0
+    ? `第 ${start + 1}-${end} 条，共 ${totalItems} 条`
+    : '暂无数据';
+
+  // Render table
+  const tbody = document.getElementById('fanTableBody');
+  if (pageData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:48px;color:var(--text-secondary)">
+      <div style="font-size:48px;margin-bottom:12px;opacity:0.3">📋</div>暂无数据</td></tr>`;
+  } else {
+    tbody.innerHTML = pageData.map(f => `
+      <tr data-fan-id="${f.userId}">
+        <td>${f.userId}</td>
+        <td>
+          <span class="fan-info">
+            <span class="fan-avatar">${f.avatar}</span>
+            <span>
+              <div class="fan-name">${f.name}</div>
+              <div class="fan-phone">${f.phone}</div>
+            </span>
+          </span>
+        </td>
+        <td>${f.seedFanCount}</td>
+        <td style="font-weight:500">${f.fanTotalPerformance.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td>
+        <td style="color:var(--primary);font-weight:500">${f.personalTotalPerformance.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</td>
+        <td>${f.redPacket}</td>
+        <td>${f.consumePoints.toLocaleString()}</td>
+        <td>${f.consumeCoupon.toFixed(2)}</td>
+        <td>${f.registerTime}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Render pagination
+  renderPagination(totalPages, totalItems);
+}
+
+function renderPagination(totalPages, totalItems) {
+  const btnFirst = document.getElementById('btnFirst');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnLast = document.getElementById('btnLast');
+  const pageNumbers = document.getElementById('pageNumbers');
+
+  btnFirst.disabled = currentPage <= 1;
+  btnPrev.disabled = currentPage <= 1;
+  btnNext.disabled = currentPage >= totalPages;
+  btnLast.disabled = currentPage >= totalPages;
+
+  // Build page number buttons
+  let pages = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      pages.push(i);
+    }
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  pageNumbers.innerHTML = pages.map(p => {
+    if (p === '...') return '<span style="padding:0 4px;color:var(--text-placeholder)">...</span>';
+    return `<button class="page-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+  }).join('');
+}
+
+// ===================== MODAL =====================
+function openFanModal(userId) {
+  const fan = seedFanData.find(f => f.userId === userId);
+  if (!fan) return;
+
+  document.getElementById('fanModalBody').innerHTML = `
+    <!-- 粉丝信息 -->
+    <div class="detail-section">
+      <div class="detail-section-title">粉丝信息</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+        <div class="fan-avatar" style="width:56px;height:56px;font-size:22px">${fan.avatar}</div>
+        <div>
+          <div style="font-size:18px;font-weight:600;margin-bottom:4px">${fan.name}</div>
+          <div style="font-size:13px;color:var(--text-secondary)">${fan.phone}</div>
+        </div>
+      </div>
+      <div class="detail-info-grid">
+        <div class="detail-info-item">
+          <div class="detail-info-label">手机号码</div>
+          <div class="detail-info-value">${fan.phone}</div>
+        </div>
+        <div class="detail-info-item">
+          <div class="detail-info-label">性别</div>
+          <div class="detail-info-value">${fan.gender}</div>
+        </div>
+        <div class="detail-info-item">
+          <div class="detail-info-label">注册时间</div>
+          <div class="detail-info-value">${fan.registerTime}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 粉丝业绩 -->
+    <div class="detail-section">
+      <div class="detail-section-title">粉丝业绩</div>
+      <div class="detail-cards">
+        <div class="detail-card">
+          <div class="detail-card-label">粉丝总业绩（元）</div>
+          <div class="detail-card-value highlight">${fan.fanTotalPerformance.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">个人总业绩（元）</div>
+          <div class="detail-card-value">${fan.personalTotalPerformance.toLocaleString('zh-CN', {minimumFractionDigits: 2})}</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">粉丝总数（人）</div>
+          <div class="detail-card-value">${fan.fanCount}</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label">种子粉丝数（人）</div>
+          <div class="detail-card-value highlight">${fan.seedFanCount}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('fanModal').classList.add('show');
+}
+
+function closeFanModal() {
+  document.getElementById('fanModal').classList.remove('show');
+}
+
+// ===================== CHART =====================
+const chartData = {
+  day: {
+    labels: ['5/6','5/7','5/8','5/9','5/10','5/11','5/12'],
+    personal: [185, 210, 178, 245, 320, 280, 310],
+    team: [1280, 1350, 1420, 1580, 1650, 1720, 1890],
+  },
+  week: {
+    labels: ['第14周','第15周','第16周','第17周','第18周','第19周'],
+    personal: [1200, 1350, 1280, 1580, 1720, 1850],
+    team: [8200, 8800, 9100, 10200, 11500, 12300],
+  },
+  month: {
+    labels: ['1月','2月','3月','4月','5月'],
+    personal: [5200, 4800, 6800, 8200, 10580],
+    team: [35200, 38600, 45200, 61800, 78320],
+  },
+};
+
+let currentGran = 'month';
+
+function drawChart() {
+  const canvas = document.getElementById('chartCanvas');
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = container.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = rect.height;
+  const data = chartData[currentGran];
+  const pad = { top: 20, right: 40, bottom: 50, left: 70 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const allVals = [...data.personal, ...data.team];
+  const maxY = Math.ceil(Math.max(...allVals) / 1000) * 1000 * 1.15;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  const gridLines = 5;
+  ctx.strokeStyle = '#f0f0f0';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = pad.top + (plotH / gridLines) * i;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+
+    const val = maxY - (maxY / gridLines) * i;
+    ctx.fillStyle = '#969799';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(val).toLocaleString(), pad.left - 8, y + 4);
+  }
+
+  // X axis labels
+  const xStep = plotW / (data.labels.length - 1);
+  ctx.fillStyle = '#969799';
+  ctx.textAlign = 'center';
+  data.labels.forEach((label, i) => {
+    const x = pad.left + xStep * i;
+    ctx.fillText(label, x, H - pad.bottom + 24);
+  });
+
+  // Draw bars (team - 粉丝总业绩)
+  const barWidth = Math.min(xStep * 0.35, 28);
+  data.team.forEach((val, i) => {
+    const x = pad.left + xStep * i - barWidth / 2;
+    const barH = (val / maxY) * plotH;
+    const y = pad.top + plotH - barH;
+
+    const grad = ctx.createLinearGradient(x, y, x, pad.top + plotH);
+    grad.addColorStop(0, 'rgba(255,107,0,0.5)');
+    grad.addColorStop(1, 'rgba(255,107,0,0.1)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, barWidth, barH);
+
+    ctx.strokeStyle = 'rgba(255,107,0,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, barWidth, barH);
+  });
+
+  // Draw line (personal - 个人总业绩)
+  ctx.beginPath();
+  ctx.strokeStyle = '#FF6B00';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  data.personal.forEach((val, i) => {
+    const x = pad.left + xStep * i;
+    const y = pad.top + plotH - (val / maxY) * plotH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw dots on line
+  data.personal.forEach((val, i) => {
+    const x = pad.left + xStep * i;
+    const y = pad.top + plotH - (val / maxY) * plotH;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#FF6B00';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Draw axes
+  ctx.strokeStyle = '#d9d9d9';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top);
+  ctx.lineTo(pad.left, pad.top + plotH);
+  ctx.lineTo(W - pad.right, pad.top + plotH);
+  ctx.stroke();
+}
+
+// ===================== EVENTS =====================
+
+// Chart granularity toggle
+document.getElementById('chartToggles').addEventListener('click', function(e) {
+  if (e.target.classList.contains('chart-toggle')) {
+    this.querySelectorAll('.chart-toggle').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentGran = e.target.dataset.gran;
+    drawChart();
+  }
+});
+
+// Chart date range
+document.getElementById('chartDateStart').addEventListener('change', function() {
+  showToast(`自定义时间范围：${this.value} 至 ${document.getElementById('chartDateEnd').value}`);
+  drawChart();
+});
+document.getElementById('chartDateEnd').addEventListener('change', function() {
+  showToast(`自定义时间范围：${document.getElementById('chartDateStart').value} 至 ${this.value}`);
+  drawChart();
+});
+
+// Table row click → modal
+document.getElementById('fanTableBody').addEventListener('click', function(e) {
+  const row = e.target.closest('tr[data-fan-id]');
+  if (!row) return;
+  openFanModal(row.dataset.fanId);
+});
+
+// Modal close
+document.getElementById('fanModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFanModal();
+});
+
+// Filters & search
+document.getElementById('timeFilter').addEventListener('change', function() {
+  currentPage = 1;
+  if (this.value === 'custom') {
+    showToast('已切换至自定义时间范围模式');
+  }
+  renderFanTable();
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  currentPage = 1;
+  renderFanTable();
+});
+
+document.getElementById('sortField').addEventListener('change', function() {
+  currentSortField = this.value;
+  currentPage = 1;
+  renderFanTable();
+});
+
+document.getElementById('sortOrder').addEventListener('change', function() {
+  currentSortOrder = this.value;
+  currentPage = 1;
+  renderFanTable();
+});
+
+// Page size
+document.getElementById('pageSizeSelect').addEventListener('change', function() {
+  pageSize = parseInt(this.value);
+  currentPage = 1;
+  renderFanTable();
+});
+
+// Pagination navigation
+document.getElementById('pageNav').addEventListener('click', function(e) {
+  const btn = e.target.closest('button');
+  if (!btn || btn.disabled) return;
+
+  const totalPages = Math.ceil(getFilteredAndSortedData().length / pageSize) || 1;
+
+  if (btn.id === 'btnFirst') currentPage = 1;
+  else if (btn.id === 'btnPrev') currentPage = Math.max(1, currentPage - 1);
+  else if (btn.id === 'btnNext') currentPage = Math.min(totalPages, currentPage + 1);
+  else if (btn.id === 'btnLast') currentPage = totalPages;
+  else if (btn.dataset.page) currentPage = parseInt(btn.dataset.page);
+
+  renderFanTable();
+});
+
+// Export button
+document.getElementById('exportBtn').addEventListener('click', function() {
+  const filtered = getFilteredAndSortedData();
+  if (filtered.length === 0) {
+    showToast('暂无数据可导出');
+    return;
+  }
+  showToast(`正在导出 ${filtered.length} 条数据为Excel格式...`);
+  setTimeout(() => showToast('导出成功！'), 1500);
+});
+
+// Sidebar menu toggle
+document.querySelectorAll('.menu-item .arrow').forEach(arrow => {
+  arrow.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const sub = this.closest('.menu-item').nextElementSibling;
+    if (sub && sub.classList.contains('menu-sub')) {
+      const isOpen = sub.classList.contains('expanded');
+      sub.classList.toggle('expanded', !isOpen);
+      sub.classList.toggle('collapsed', isOpen);
+      this.classList.toggle('open', !isOpen);
+    }
+  });
+});
+
+// Toast
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+// ===================== INIT =====================
+renderFanTable();
+drawChart();
+window.addEventListener('resize', drawChart);
+</script>
+</body>
+</html>

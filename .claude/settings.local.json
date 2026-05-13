@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "mcp__minimax-coding-plan-mcp__understand_image",
+      "mcp__minimax-coding-plan-mcp__web_search"
+    ],
+    "additionalDirectories": []
+  }
+}
