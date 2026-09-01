@@ -1,0 +1,11 @@
+# Local environment and MCP credentials
+.env
+.env.*
+!.env.example
+.mcp.json
+
+# Private keys and local credentials
+*.pem
+*.key
+credentials.json
+secrets.json
